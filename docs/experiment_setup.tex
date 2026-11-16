@@ -1,0 +1,245 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{float}
+\usepackage[margin=1in]{geometry}
+\floatstyle{ruled}
+\newfloat{algorithm}{t}{loa}
+\floatname{algorithm}{Algorithm}
+\begin{document}
+% ============================================================================
+% Sections IV and V for the IEEE paper, structured after the LocaRadio template.
+% Device labels D1..D5 (D5 = victim, D1 = target attractor). Compiles standalone.
+% ============================================================================
+
+\section{Data Collection and Pre-Processing}
+
+\subsection{Wireless Transmission Setup}
+We built a live IEEE~802.11a/g over-the-air testbed on GNU~Radio (\texttt{gr-ieee802-11}) and
+Ettus USRP software-defined radios, driven from a single host over UHD at a $5.29$~GHz center
+frequency and a $5$~MS/s complex baseband rate. The transmitted waveform is a standard $802.11$
+OFDM frame whose payload is BPSK, rate-$1/2$ coded; BPSK is chosen for its robustness at low SNR
+and its low bit-error rate, which lets us separate genuine fingerprint-induced errors from
+modulation errors. The testbed has three roles.
+
+The \emph{victim} is a networked N-series USRP transmitting on antenna port~J1 at a fixed
+normalized gain of $0.3689$; it is the identity the adversary impersonates from, and is enrolled
+as class~D5. The \emph{adversary} is a second N-series USRP, cabled to the victim in a MIMO
+configuration (\texttt{clock\_source} and \texttt{time\_source} set to \texttt{mimo}, a shared
+$10$~MHz/PPS reference), so that in the two-channel experiment the two transmit streams are
+phase-coherent. Four further radios---two B200mini and two B205mini units---provide the remaining
+enrolled devices D1--D4 and are hot-swapped one at a time into the transmit port. A B205mini is the
+\emph{receiver}, capturing at a fixed normalized gain of $0.93$. This receive gain is held
+identical between enrollment and every attack campaign: the classifier is trained through the
+receiver in one gain state, and interrogating it in another ($\sim\!10$~dB less received power)
+drives the \emph{unperturbed} victim to mis-classify, turning every subsequent fooling measurement
+into a receiver-gain artifact rather than an attack effect.
+
+Each transmitted frame carries a $500$-byte payload consisting of a $4$-byte tag, a $4$-byte
+unsigned frame index, and a fixed fill, i.e.\ $4000$ payload bits that are known a priori; this
+makes the transmitted bits of every frame exactly recoverable and enables a true bit-error rate
+rather than a self-consistency estimate. Frames repeat at a $65\,661$-sample spacing
+($\approx\!13$~ms, $24\%$ duty).
+
+To enroll a device we bring its transmit flowgraph up once and keep it resident, then calibrate
+its normalized gain by a secant search to a common received level of $-30$~dB ($\pm 0.5$~dB;
+measured slope $\approx\!13.7$~dB per unit normalized gain) before a $30$~s capture; the victim is
+instead captured at its fixed gain. Calibrating all four non-victim radios to a single received
+level removes amplitude as a discriminative cue, forcing the classifier onto the hardware
+fingerprint. We collect three runs per device, each from an independent radio initialization.
+
+\subsection{Data Pre-Processing}
+From the raw complex I/Q of each run we (1) detect and extract individual $802.11$ frames,
+(2) window the payload, and (3) normalize, before feeding the network; the raw I/Q is then
+discarded. Frames are located with an energy-based burst detector (noise floor at the $20$th
+amplitude percentile, threshold multiplier $2.0$). Within a frame, the sample geometry is
+pad$\,\to\,100$, preamble $100$--$420$ (short training $100$--$260$, long training $260$--$420$),
+SIGNAL $420$--$500$, payload $500$ onward; we retain only the \emph{payload}, since the preamble
+and pilots are protocol-fixed and carry no device-specific signature.
+
+The payload span of length $A=13\,312$ samples starting at $\mathrm{PRE\_ROLL}=500$ is cut into
+$13$ non-overlapping windows of $W=1024$ samples (hop $=W$). Each window $\mathbf w\in\mathbb C^{W}$
+is normalized to unit RMS,
+\begin{equation}\label{eq:norm}
+  \hat{\mathbf w}=\mathbf w\Big/\sqrt{\tfrac1W\textstyle\sum_{n=1}^{W}\lvert w_n\rvert^2},
+\end{equation}
+and presented to the network as two real channels (in-phase and quadrature), a tensor of shape
+$(2,W)$. Non-overlapping windows avoid train/test leakage across the segments of one frame, and
+the unit-RMS step \eqref{eq:norm} is what makes the $-30$~dB gain calibration effective: with
+amplitude removed, only hardware nonlinearity remains.
+
+For the adversarial perturbation an $\ell_\infty$ mask $\Pi$ holds $\boldsymbol\delta$ at zero over
+a $780$-sample lead, i.e.\ frame samples $[500,1280)$, which contain the $802.11$ MAC header and
+service field ($9$ BPSK rate-$1/2$ symbols after SIGNAL). Perturbing this region corrupts the
+transmitter address and the receiver silently drops the frame on its address check (measured:
+perturbing samples $500$--$1220$ alone rejected $86/88$ frames while causing only two bit errors);
+the mask keeps every crafted frame decodable.
+
+\subsection{Dataset}
+The enrollment dataset comprises five devices $\times$ three runs, at $\sim\!100$--$110$ decoded
+frames per run ($\sim\!1.2$~GB per run, $\sim\!18$~GB in total), i.e.\ on the order of
+$5\times 3\times 105\times 13\approx 2.0\times10^{4}$ classifier windows. One run per device
+(run~3) is held out for validation. For the victim, run~3 additionally serves as the
+\emph{received-domain} source against which perturbations are crafted, since the fingerprint lives
+in the received signal. The transmit-side victim signal used over the air is a frame-id--matched
+\emph{replay}: the frame indices decoded at the receiver are carried back to the transmit tap and
+used to cut the corresponding clean baseband frames, which are then placed at the $65\,661$-sample
+spacing---a known-good waveform that has never itself been over the air. Because crafting operates
+on received windows (active RMS $\rho_{\mathrm{rx}}\!\approx\!0.025$) while the replay transmits at
+$\rho_{\mathrm{tx}}\!\approx\!0.299$, the crafted perturbation is rescaled to transmit level by
+\begin{equation}\label{eq:scale}
+  s=\rho_{\mathrm{tx}}/\rho_{\mathrm{rx}}\approx 11.7
+\end{equation}
+before radiation. Over-the-air captures are scored and then deleted, as each is several gigabytes.
+
+\section{Evaluation}
+
+\subsection{Experiment Setting}
+\paragraph{Compute.} Model training, perturbation crafting, and scoring run on an NVIDIA RTX~A6000
+GPU ($48$~GB) under PyTorch with CUDA.
+
+\paragraph{Fingerprint classifier.} The classifier is a complex-valued CNN (CVNN) with
+$4.2\times10^{5}$ parameters: four complex $1$D-convolution blocks (output channels
+$32/64/128/128$, kernels $7/5/5/3$), each followed by complex batch normalization, a complex ReLU,
+and length-$2$ average pooling; then a complex magnitude, global average pooling, and a real head
+(Linear~$128{\to}128$, ReLU, dropout $0.3$, Linear~$128{\to}5$). It classifies each $1024$-sample
+window and decides a frame by majority vote over the frame's $13$ windows. We fine-tune for $80$
+epochs with AdamW (learning rate $6\times10^{-4}$, weight decay $10^{-4}$), a cosine-annealed
+schedule, cross-entropy with label smoothing $0.05$, and batch size $256$, holding run~3 out for
+validation. Each training batch is drift-augmented---random global phase, a carrier-frequency
+offset drawn uniformly in $\pm3000$~Hz, a circular time shift of up to $6$ samples, and additive
+noise at an SNR drawn uniformly in $[8,30]$~dB---to harden the model against the per-device CFO and
+channel drift observed between sessions. On same-session validation the classifier reaches $100\%$
+frame accuracy; it is refit each session, because a prior-day checkpoint fails on a freshly
+re-leveled enrollment.
+
+\paragraph{Perturbation crafting.} The adversary crafts an additive perturbation
+$\boldsymbol\delta$ under an $\ell_\infty$ budget $\varepsilon$ using six white-box attacks: FGSM
+(one step, $\alpha=\varepsilon$), BIM and MIM (ten steps, $\alpha=\varepsilon/10$; MIM with
+momentum $\mu=1.0$), and PGD with a random start and ten steps at fixed step sizes
+$\alpha\in\{0.01,0.05,0.10\}$. The mask $\Pi$ is applied at the random start and after every step,
+so the attack is optimized under the header constraint rather than clipped afterward. The loss
+descends the target-class logit (targeted) or ascends the victim-class logit (untargeted); targeted
+attacks aim at the dominant attractor class~D1. Perturbations are optimized on the received victim
+windows, stored compactly, and scaled by \eqref{eq:scale} before radiation; the nominal realized
+perturbation-to-signal ratio is $\mathrm{PSR}=10\log_{10}(2\varepsilon^2)$~dB. A silent-adversary
+control (victim replay, adversary path zeroed) precedes every campaign and must classify as the
+victim before any measurement is trusted. Table~\ref{tab:attacks} lists the six configurations,
+and Algorithm~\ref{alg:craft} states the common per-frame crafting loop.
+Algorithm~\ref{alg:uni} gives the \emph{universal} variant: a single frame-perturbation
+$\boldsymbol\delta$, shared across all frames and radiated identically on every one, obtained by
+averaging the raw per-frame gradients before the sign (a mean of per-frame signs would let
+opposing frames cancel).
+
+\begin{table}[t]\centering
+\caption{The six white-box attacks used to craft $\boldsymbol\delta$.}
+\label{tab:attacks}
+\begin{tabular}{lcccc}
+\hline
+Attack & Steps & Step size $\alpha$ & Momentum $\mu$ & Random start\\
+\hline
+FGSM     & $1$  & $\varepsilon$    & --  & no\\
+BIM      & $10$ & $\varepsilon/10$ & --  & no\\
+MIM      & $10$ & $\varepsilon/10$ & $1.0$ & no\\
+PGD-$0.01$ & $10$ & $0.01$ & -- & yes\\
+PGD-$0.05$ & $10$ & $0.05$ & -- & yes\\
+PGD-$0.10$ & $10$ & $0.10$ & -- & yes\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{algorithm}[t]
+\caption{Masked $\ell_\infty$ perturbation crafting}\label{alg:craft}
+{\small\setlength{\parindent}{0pt}%
+\textbf{Require:} classifier $f$; victim windows $\{\mathbf w_i\}_{i=1}^{n}$ (one per captured
+frame); label $y$ ($=$ target D1 if targeted, victim D5 if untargeted); budget $\varepsilon$;
+steps $K$; step $\alpha$; momentum $\mu$; mask $\Pi$; sign $\sigma$ ($-1$ targeted, $+1$
+untargeted)\\
+\textbf{Ensure:} per-window $\{\boldsymbol\delta_i\}_{i=1}^{n}$, each
+$\lVert\boldsymbol\delta_i\rVert_\infty\le\varepsilon$ and
+$\boldsymbol\delta_i=\Pi\boldsymbol\delta_i$\\[2pt]
+$1$:\ \ \textbf{for each} window $i=1,\dots,n$ \textbf{(independently) do}\hfill{\itshape// no averaging or sharing across windows}\\
+$2$:\ \ \quad $\boldsymbol\delta_i \gets \Pi\odot\mathcal U(-\varepsilon,\varepsilon)$ if random start else
+$\mathbf 0$;\ \ $\mathbf g_i\gets\mathbf 0$\\
+$3$:\ \ \quad \textbf{for} $k=1,\dots,K$ \textbf{do}\\
+$4$:\ \ \qquad $\mathbf s_i \gets \nabla_{\boldsymbol\delta_i}\,\mathcal L\!\big(f(\mathbf w_i+\boldsymbol\delta_i),\,y\big)$\\
+$5$:\ \ \qquad \textbf{if} $\mu>0$:\ \ $\mathbf g_i \gets \mu\,\mathbf g_i + \mathbf s_i/\lVert\mathbf s_i\rVert_1$,\ \ $\mathbf s_i \gets \mathbf g_i$\\
+$6$:\ \ \qquad $\boldsymbol\delta_i \gets \mathrm{clip}_{[-\varepsilon,\varepsilon]}\!\big(\boldsymbol\delta_i + \sigma\,\alpha\,\mathrm{sign}(\mathbf s_i)\big)$\\
+$7$:\ \ \qquad $\boldsymbol\delta_i \gets \Pi\odot\boldsymbol\delta_i$\hfill{\itshape// hold the MAC header at zero}\\
+$8$:\ \ \textbf{return} $\{\boldsymbol\delta_i\}_{i=1}^{n}$\par}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{Universal masked $\ell_\infty$ perturbation crafting}\label{alg:uni}
+{\small\setlength{\parindent}{0pt}%
+\textbf{Require:} classifier $f$; victim frames $\{\mathbf w_i\}_{i=1}^{n}$; label $y$ ($=$ target
+D1 if targeted, victim D5 if untargeted); budget $\varepsilon$; steps $K$; step $\alpha$;
+momentum $\mu$; header mask $\Pi$ (zeros the MAC-header samples of window~1); sign $\sigma$
+($-1$ targeted, $+1$ untargeted)\\
+\textbf{Ensure:} ONE frame-perturbation $\boldsymbol\delta$ shared across all $n$ frames, with
+$\lVert\boldsymbol\delta\rVert_\infty\le\varepsilon$ and $\boldsymbol\delta=\Pi\boldsymbol\delta$\\[2pt]
+$1$:\ \ $\boldsymbol\delta \gets \Pi\odot\mathcal U(-\varepsilon,\varepsilon)$ if random start else
+$\mathbf 0$;\ \ $\mathbf g\gets\mathbf 0$\\
+$2$:\ \ \textbf{for} $k=1,\dots,K$ \textbf{do}\\
+$3$:\ \ \quad $\mathbf s \gets \dfrac{1}{n}\sum_{i=1}^{n}\nabla_{\boldsymbol\delta}\,\mathcal L\!\big(f(\mathbf w_i+\boldsymbol\delta),\,y\big)$\hfill{\itshape// raw gradients averaged over ALL frames, then signed}\\
+$4$:\ \ \quad \textbf{if} $\mu>0$:\ \ $\mathbf g \gets \mu\,\mathbf g + \mathbf s/\lVert\mathbf s\rVert_1$,\ \ $\mathbf s \gets \mathbf g$\\
+$5$:\ \ \quad $\boldsymbol\delta \gets \mathrm{clip}_{[-\varepsilon,\varepsilon]}\!\big(\boldsymbol\delta + \sigma\,\alpha\,\mathrm{sign}(\mathbf s)\big)$\\
+$6$:\ \ \quad $\boldsymbol\delta \gets \Pi\odot\boldsymbol\delta$\hfill{\itshape// hold the MAC header at zero}\\
+$7$:\ \ \textbf{return} $\boldsymbol\delta$\hfill{\itshape// radiated identically on every frame}\par}
+\end{algorithm}
+
+\paragraph{Metrics.} For every $(\text{attack},\varepsilon)$ point we report the \emph{fooling
+rate} (fraction of frames classified as any non-victim class), the \emph{targeting rate} (fraction
+classified as D1), the plurality predicted class, the number of frames decoded by the $802.11$
+receiver, and the bit-error rate. When zero bit errors are observed we report the rule-of-three
+$95\%$ upper bound $3/N$ over the $N=(\text{frames decoded})\times4000$ compared payload bits
+rather than a bare zero, and the realized PSR is recorded per point.
+
+Table~\ref{tab:exps} summarizes the three experiments; each over-the-air arm is run for both the
+targeted and untargeted objectives and all six attacks of Table~\ref{tab:attacks}.
+
+\begin{table}[t]\centering
+\caption{The three experiments.}
+\label{tab:exps}
+\begin{tabular}{llccc}
+\hline
+ & $\boldsymbol\delta$ enters at & $\varepsilon$ grid & Pts. & Radio\\
+\hline
+E1 Digital        & received feature window   & $0.01$--$1.0$            & --  & no\\
+E2 Single-channel & on victim replay (ch1$=$0)& $[0.10,0.50]$, $\Delta 0.01$ & $41$ & yes\\
+E3 Two-channel    & separate ch1 (MIMO)       & $[0.01,0.10]$ masked     & $16$ & yes\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Experiment~1: Digital Reachability}
+Experiment~1 is a software-only upper bound with no radio. Each crafted $\boldsymbol\delta$ is
+added to the received victim feature windows and classified through the model, over an
+$\varepsilon$ grid and all six attacks, reporting the per-class landing distribution and a proxy
+bit-error rate (the BPSK subcarrier sign-flip fraction). It establishes which of the five classes
+the victim is reachable to \emph{in the feature domain}, independent of any channel, and fixes the
+digital reference threshold against which the over-the-air onset is compared.
+
+\subsection{Experiment~2: Single-Channel Over-the-Air}
+In Experiment~2 the perturbation is superimposed on the victim's baseband replay and radiated as a
+single coherent stream, so $\boldsymbol\delta$ rides the victim's own transmit chain. The composite
+$\mathbf x=\mathbf r+s\,\boldsymbol\delta$ (replay $\mathbf r$, scale $s$, a $0.95$ headroom factor
+against clipping) is transmitted on one channel with the adversary channel zeroed. We sweep a fine
+grid $\varepsilon\in[0.10,0.50]$ in steps of $0.01$ ($41$ points), for both the targeted (D1) and
+untargeted arms and all six attacks, at a transmit gain of $0.493$. At each point the capture at
+receive gain $0.93$ is scored two ways: classified by the CVNN for the fooling and targeting
+rates, and decoded by the full $802.11$ receiver for the bit-error rate over the $\sim\!102$
+recovered frames ($\sim\!4.08\times10^{5}$ payload bits). A two-pass transmission with the first
+pass discarded absorbs power-up transients so all frames are scored past the block boundary.
+
+\subsection{Experiment~3: Two-Channel Over-the-Air}
+Experiment~3 radiates the victim replay on channel~0 and the adversary perturbation $s\,\boldsymbol
+\delta$ on channel~1 from the MIMO-locked pair (shared clock, both on port~J1, transmit gains
+$0.493/0.493$), so the perturbation reaches the receiver through a \emph{separate} channel
+superimposed on the victim signal. Because the inter-channel RF phase $\psi$ is redrawn at every
+power-up, we pre-concatenate each epsilon at four phases $\psi\in\{0,90,180,270\}^\circ$ and score
+the maximum over $\psi$ (a blind, phase-agnostic attack). We sweep a masked dense grid
+$\varepsilon\in[0.01,0.10]$ ($16$ points) for the targeted and untargeted arms and all six attacks;
+capture and dual scoring (classification and $802.11$ decoding) follow Experiment~2, and the
+spectrum display is kept visible throughout each MIMO transmission.
+
+\end{document}

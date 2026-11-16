@@ -1,0 +1,155 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{bm}
+\newtheorem{theorem}{Theorem}\newtheorem{corollary}[theorem]{Corollary}
+\newcommand{\C}{\mathbb{C}}\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\lVert #1\rVert}\newcommand{\Rx}{\mathsf{R}}
+\newcommand{\bu}{\bm u}\newcommand{\bw}{\bm w}\newcommand{\bd}{\bm\delta}\newcommand{\bg}{\bm g}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\title{A Direct Existence Proof for the Targeted RF-Fingerprint Attack:\\
+       the decision is a linear inequality}
+\author{Experiment 3 --- direct model}\date{}
+\begin{document}\maketitle
+
+\noindent\emph{Idea.} The classifier is a CReLU network, hence \textbf{piecewise linear}: near the
+operating point it coincides with its local affine piece, so the target-vs-victim decision is one
+linear functional and the whole attack is the solution of a single linear inequality. No
+reachability axiom, no genericity: the existence, the budget, the single-vs-two-channel ratio, and
+the stealth condition are read off the equation. (A companion note,
+\texttt{targeted\_attack\_transfer.tex}, gives an operator-theoretic formulation and certifies the
+robustness of the margin $m_0$ used below.)
+
+\section{System model}
+
+A victim radio transmits an $802.11$a/g OFDM frame, complex baseband $\bu\in\C^N$ (the payload
+window the classifier reads). Each radio $\theta$ imprints its \emph{fingerprint} through a
+memoryless PA nonlinearity $g_\theta(z)=\sum_{k}a^{(\theta)}_{2k+1}z\lvert z\rvert^{2k}$ (applied
+sample-wise, Jacobian $J_\theta$); propagation over a coherence block is a linear
+$H_\theta\in\C^{N\times N}$; the receiver front end, sync, and payload windowing form a linear
+$\Rx:\C^N\to\C^M$. The classifier feature for the unperturbed victim $v$ is
+$\bw_v=\Rx H_v g_v(\bu)$, and a trained network $f:\R^{2M}\to\R^K$ decides
+$D(\bw)=\arg\max_k f_k(\bw)$; the target is $t\neq v$. The adversary adds $\bd$ (with header mask
+$\bd=\Pi\bd$), which enters the received feature as
+\[
+  \text{digital: }\bw_v+\bd_w;\quad
+  \text{single-channel: }\Rx H_v g_v(\bu+\bd);\quad
+  \text{two-channel: }\bw_v+\Rx H_a g_a(\bd),
+\]
+the last radiated by a separate adversary chain $(g_a,H_a)$.
+
+\section{Two equations}
+
+\paragraph{(E1) The score is locally linear.} A CReLU network $f:\R^{2M}\!\to\R^{K}$ is piecewise
+linear, so near $\bw_v$ it coincides with its local affine piece,
+\begin{equation}\label{eq:aff}
+  f(\bw)=G\,\bw+\bm c,\qquad G=\left.\partial f/\partial\bw\right|_{\bw_v} ,
+\end{equation}
+the exact local Jacobian (the classifier contributes no curvature at $\bw_v$). Define the
+\emph{target--victim score} $s(\bw):=f_t(\bw)-f_v(\bw)=\bg^\top\bw+\beta$ with
+\begin{equation}\label{eq:g}
+  \bg:=(G_{t}-G_{v})^\top=\nabla s(\bw_v)\in\R^{2M},\qquad \beta:=c_t-c_v .
+\end{equation}
+The victim is classified correctly, so $s(\bw_v)=-m_0$ with margin $m_0:=f_v(\bw_v)-f_t(\bw_v)>0$.
+
+\paragraph{(E2) The physical map is linear in $\bd$.} A baseband perturbation $\bd$
+($\bd=\Pi\bd$ under the header mask) produces the received displacement
+\begin{equation}\label{eq:phys}
+  \bw_{\mathcal C}(\bd)=\bw_v+A_{\mathcal C}\,\bd+\bm r_{\mathcal C}(\bd),\qquad
+  \norm{\bm r_{\mathcal C}(\bd)}\le\tfrac12 C_{\mathcal C}\norm{\bd}^2,
+\end{equation}
+with $A_{\mathcal S}=\Rx H_v J_v(\bu)\Pi$ (single channel; $\bd$ rides the victim PA $J_v$) and
+$A_{\mathcal T}=\Rx H_a J_a\Pi$ (two channel; $\bd$ rides the adversary chain). $C_{\mathcal C}$
+is the PA curvature bound.
+
+\section{The attack is a linear inequality}
+
+Insert \eqref{eq:phys} into $s$ and use \eqref{eq:aff}:
+\begin{equation}\label{eq:score}
+  s\big(\bw_{\mathcal C}(\bd)\big)=\underbrace{s(\bw_v)}_{-m_0}
+     +\;\bg^\top A_{\mathcal C}\,\bd\;+\;\bg^\top\bm r_{\mathcal C}(\bd).
+\end{equation}
+The targeted attack succeeds iff $s(\bw_{\mathcal C}(\bd))\ge 0$. Dropping the $O(\norm{\bd}^2)$
+term, this is exactly the scalar linear inequality
+\begin{equation}\label{eq:ineq}
+  \boxed{\;\big\langle A_{\mathcal C}^\top\bg,\ \bd\big\rangle\;\ge\;m_0\;}.
+\end{equation}
+
+\begin{theorem}[Existence and minimum budget --- straight from \eqref{eq:ineq}]\label{thm:exist}
+The minimum-$\ell_2$ solution of \eqref{eq:ineq} is, by Cauchy--Schwarz,
+\begin{equation}\label{eq:sol}
+  \bd^\star=\frac{m_0}{\norm{A_{\mathcal C}^\top\bg}^2}\,A_{\mathcal C}^\top\bg,
+  \qquad
+  \norm{\bd^\star}=\varepsilon_{\mathcal C}=\frac{m_0}{\norm{A_{\mathcal C}^\top\bg}} .
+\end{equation}
+Hence a targeted perturbation of budget $\varepsilon_{\mathcal C}=m_0/\norm{A_{\mathcal C}^\top\bg}$
+exists whenever $A_{\mathcal C}^\top\bg\neq0$, i.e.\ whenever the decision direction $\bg$ is not
+orthogonal to the range of the physical operator.
+\end{theorem}
+
+\begin{proof}
+For any $\bd$ with $\langle A_{\mathcal C}^\top\bg,\bd\rangle\ge m_0$, Cauchy--Schwarz gives
+$m_0\le\norm{A_{\mathcal C}^\top\bg}\,\norm{\bd}$, so $\norm{\bd}\ge m_0/\norm{A_{\mathcal C}^\top\bg}$;
+$\bd^\star$ in \eqref{eq:sol} attains it and satisfies \eqref{eq:ineq} with equality. Substituting
+$\bd^\star$ into \eqref{eq:score}, $s(\bw_{\mathcal C}(\bd^\star))=\bg^\top\bm r_{\mathcal C}(\bd^\star)
+\ge-\norm{\bg}\tfrac12 C_{\mathcal C}\varepsilon_{\mathcal C}^2$, which is $\ge0$ once the first-order
+term $m_0$ dominates the remainder, i.e.\ for
+$\varepsilon_{\mathcal C}\le 2/\big(C_{\mathcal C}\norm{\bg}\big)\cdot(\text{margin slack})$; the
+condition is void when the PA is linear ($C_{\mathcal C}=0$), where \eqref{eq:ineq} is exact.
+\end{proof}
+
+\begin{corollary}[Single- vs.\ two-channel, from \eqref{eq:sol}]\label{cor:ratio}
+\[
+  \frac{\varepsilon_{\mathcal S}}{\varepsilon_{\mathcal T}}
+  =\frac{\norm{A_{\mathcal T}^\top\bg}}{\norm{A_{\mathcal S}^\top\bg}}
+  =\frac{\norm{\Pi J_a^\top H_a^\top \Rx^\top \bg}}{\norm{\Pi J_v^\top H_v^\top \Rx^\top \bg}} .
+\]
+The budget in each configuration is set by the projection of the fixed decision direction $\bg$
+onto that configuration's operator; the digital case is $A=I$, giving
+$\varepsilon_{\mathrm{dig}}=m_0/\norm{\bg}$ and the ratio
+$\varepsilon_{\mathcal C}/\varepsilon_{\mathrm{dig}}=\norm{\bg}/\norm{A_{\mathcal C}^\top\bg}\ge1$
+--- the digital$\to$OTA gap, now an identity.
+\end{corollary}
+
+\section{Stealth is a second linear inequality}
+
+Let $\Psi$ be the (linear) OFDM decision-statistic map matched to $H_v$, $d_{\min}$ the symbol
+distance. Link preservation is
+\begin{equation}\label{eq:stealth}
+  \norm{\Psi A_{\mathcal C}\,\bd}_\infty\le d_{\min}/2 .
+\end{equation}
+The stealthy targeted attack is the feasibility of \eqref{eq:ineq}\,$\wedge$\,\eqref{eq:stealth}:
+\[
+  \exists\,\bd:\quad \langle A_{\mathcal C}^\top\bg,\bd\rangle\ge m_0
+  \ \ \text{and}\ \ \norm{\Psi A_{\mathcal C}\bd}_\infty\le d_{\min}/2 .
+\]
+\begin{theorem}[Stealth from the two inequalities]\label{thm:stealth}
+Decompose $\bd=\bd_\parallel+\bd_\perp$ with $\bd_\perp\in\ker(\Psi A_{\mathcal C})$.
+\begin{enumerate}
+\item[\textbf{(S)}] Single channel: $\Psi A_{\mathcal S}=\Psi\Rx H_v J_v\Pi$ contains $H_v$, which
+$\Psi$ inverts, so $\ker(\Psi A_{\mathcal S})\neq\{0\}$. If the projection of
+$A_{\mathcal S}^\top\bg$ onto that kernel is nonzero, choosing $\bd=\bd_\perp$ makes
+\eqref{eq:stealth} \emph{identically zero} while \eqref{eq:ineq} is still solvable: a
+$\mathrm{BER}=0$ targeted attack exists, with budget
+$\varepsilon_{\mathcal S}^{\mathrm{stealth}}=m_0/\norm{P_{\ker}A_{\mathcal S}^\top\bg}\ge\varepsilon_{\mathcal S}$.
+\item[\textbf{(T)}] Two channel: $\Psi A_{\mathcal T}$ carries $H_a\neq H_v$, not inverted by
+$\Psi$; if it has trivial kernel on the reachable directions then every $\bd$ with
+$\langle A_{\mathcal T}^\top\bg,\bd\rangle\ge m_0$ forces
+$\norm{\Psi A_{\mathcal T}\bd}_\infty\ge \sigma_{\min}(\Psi A_{\mathcal T})\,\varepsilon_{\mathcal T}$;
+once $\varepsilon_{\mathcal T}>d_{\min}/(2\norm{\Psi A_{\mathcal T}})$, \eqref{eq:stealth} fails:
+impersonation forces $\mathrm{BER}>0$.
+\end{enumerate}
+\end{theorem}
+\noindent The two channels differ by one factor in the equations---$H_v$ (invertible by $\Psi$)
+vs.\ $H_a$ (not)---which is the whole of the stealth dichotomy.
+
+\section*{What is measured vs.\ derived}
+Only two numbers enter: the margin $m_0$ and the decision direction $\bg=(G_t-G_v)^\top$, both
+read from the trained network at $\bw_v$ (one forward/backward pass). Everything else
+---existence \eqref{eq:sol}, the OTA budget, the single/two-channel ratio (Cor.~\ref{cor:ratio}),
+and the stealth dichotomy (Thm.~\ref{thm:stealth})---is algebra on \eqref{eq:ineq} and
+\eqref{eq:stealth}. The reachability ``axiom'' of the transfer-theorem version is replaced by the
+identity $m_0>0$ (the victim has a finite target margin), and no genericity argument is used. The
+only approximation is the PA curvature $C_{\mathcal C}$ in \eqref{eq:phys}, which vanishes to first
+order in $\bd$ (and exactly for a linearized PA).
+\end{document}

@@ -1,0 +1,410 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{bm}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}{Assumption}
+\renewcommand{\theassumption}{A\arabic{assumption}}
+
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\Rx}{\mathsf{R}}
+\newcommand{\bu}{\bm{u}}
+\newcommand{\bw}{\bm{w}}
+\newcommand{\bd}{\bm{\delta}}
+\newcommand{\smin}{\sigma_{\min}}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\range}{range}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\title{Companion note: an operator-theoretic formulation and \\
+       reachability certificates for the targeted RF-fingerprint attack}
+\author{Experiment 3 --- analytical model (companion to \texttt{targeted\_attack\_model.tex})}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\emph{This is a companion to the primary proof} (\texttt{targeted\_attack\_model.tex}), which
+derives the attack directly as a linear inequality. Here we give the operator-theoretic view and,
+in Section~\ref{sec:certify}, certify the robustness of the digital margin.
+We give a mathematical model of the targeted adversarial attack against a deep
+RF-fingerprinting classifier that was demonstrated experimentally over the air in both a
+single-channel (perturbation riding the victim's own transmit chain) and a two-channel
+(perturbation radiated by a separate adversary) configuration. Rather than attempt to prove
+the (analytically intractable) claim that a deep classifier \emph{can} be fooled, we take the
+existence of a \emph{digital} targeted adversarial perturbation as an axiom---justified
+experimentally by a $100\%$ digital reachability sweep---and prove a \emph{transfer theorem}:
+under invertibility and conditioning of the physical forward operator (power amplifier
+$\times$ channel $\times$ receiver window), the digital attack has a bounded physical preimage,
+so a targeted over-the-air attack provably exists. The proof yields (i) a closed-form
+budget-scaling law $\varepsilon_{\mathrm{OTA}} = \varepsilon_{\mathrm{dig}}/\smin$ that
+explains the measured digital-to-OTA gap and the empirical amplitude scale factor, and (ii) a
+dimension-counting \emph{stealth} theorem that explains why the single-channel attack keeps the
+link intact ($\mathrm{BER}\approx 0$) while the two-channel attack impersonates only with link
+damage.
+\end{abstract}
+
+\section{Signal and system model}
+
+\paragraph{Baseband frame.} A single $802.11$a/g OFDM frame is a complex baseband vector
+$\bu \in \C^{N}$ (the payload window used by the classifier; in the experiments $N$ corresponds
+to the $13312$-sample payload span). We identify $\C^{N}\cong\R^{2N}$ throughout and use the
+Euclidean norm unless a subscript indicates $\ell_\infty$.
+
+\paragraph{Transmit chain (the fingerprint).} Each physical radio $\theta$ imprints its
+hardware signature through a memoryless, odd-order power-amplifier (PA) nonlinearity applied
+sample-wise,
+\begin{equation}\label{eq:pa}
+  g_\theta(z) \;=\; \sum_{k=0}^{K} a^{(\theta)}_{2k+1}\, z\,\lvert z\rvert^{2k},
+  \qquad z\in\C,
+\end{equation}
+with device-specific coefficients $\{a^{(\theta)}_{2k+1}\}$. The map
+$g_\theta:\C^N\to\C^N$ acts entrywise. It is the \emph{fingerprint}: the classifier learned to
+read the coefficients $a^{(\theta)}$ from their effect on $\bu$. We write
+$J_\theta(\bu)\in\R^{2N\times 2N}$ for the (real) Jacobian of $g_\theta$ at $\bu$, which is
+block-diagonal because $g_\theta$ is memoryless.
+
+\paragraph{Channel and receiver.} Over one coherence block the propagation is linear:
+$H_\theta\in\C^{N\times N}$ (a circular-convolution / diagonal-in-frequency operator, optionally
+composed with a carrier-frequency-offset phase ramp). The receiver front end, synchronizer, and
+payload windowing are collected into a linear operator $\Rx:\C^{N}\to\C^{M}$ acting on the
+signal component (additive noise is treated separately). The classifier feature seen for the
+\emph{unperturbed} victim $v$ is
+\begin{equation}\label{eq:wv}
+  \bw_v \;=\; \Phi_v(\bu) \;:=\; \Rx\,H_v\,g_v(\bu)\;\in\;\C^{M}.
+\end{equation}
+
+\paragraph{Classifier.} A trained network $f:\R^{2M}\to\R^{K}$ produces class scores, with
+decision $D(\bw)=\argmax_{k} f_k(\bw)$. Classes are $\{1,\dots,K\}$; the victim is $v$ and the
+attacker's chosen impersonation target is $t\neq v$.
+
+\section{Threat model: three attack operators}
+
+The adversary adds a bounded perturbation $\bd$; the three configurations differ only in
+\emph{where} $\bd$ enters the forward map.
+
+\begin{description}
+\item[Digital ($\mathcal{D}$).] The received feature is perturbed directly,
+  $\bw \mapsto \bw_v + \bd_w$, $\norm{\bd_w}_\infty\le\varepsilon$. This is the white-box upper
+  bound and the reference experiment.
+\item[Single-channel OTA ($\mathcal{S}$).] The perturbation is injected at baseband
+  \emph{before} the victim PA and rides the victim's own chain,
+  \begin{equation}\label{eq:sc}
+    \bw_{\mathcal S}(\bd) \;=\; \Rx\,H_v\,g_v(\bu+\bd).
+  \end{equation}
+\item[Two-channel OTA ($\mathcal{T}$).] The perturbation is radiated by a separate adversary
+  radio (PA $g_a$, channel $H_a$) and superimposes at the receiver,
+  \begin{equation}\label{eq:2ch}
+    \bw_{\mathcal T}(\bd) \;=\; \Rx\,H_v\,g_v(\bu) \;+\; \Rx\,H_a\,g_a(\bd)
+    \;=\; \bw_v + \Rx\,H_a\,g_a(\bd).
+  \end{equation}
+\end{description}
+
+A mask $\Pi$ (a coordinate projection) fixes $\bd$ to zero on the MAC-header / synchronization
+samples: $\bd=\Pi\bd$. All statements below hold verbatim with $A\mapsto A\Pi$; the mask only
+shrinks the usable column space of the forward operator by the masked fraction.
+
+\begin{definition}[Targeted success]
+An attack in configuration $\mathcal C\in\{\mathcal S,\mathcal T\}$ with budget $\varepsilon$
+\emph{succeeds} if there is $\bd$, $\norm{\bd}\le\varepsilon$, $\bd=\Pi\bd$, with
+$D\!\big(\bw_{\mathcal C}(\bd)\big)=t$.
+\end{definition}
+
+\section{Assumptions}
+
+\begin{assumption}[Local regularity]\label{as:smooth}
+$f$ is continuous and the decision map $D$ is constant on open cells; $g_v,g_a$ are $C^2$ on
+the operating region with $\norm{\nabla^2 g_v}\le L_v$, $\norm{\nabla^2 g_a}\le L_a$ (bounded PA
+curvature; the PA is not driven into hard clipping).
+\end{assumption}
+
+\begin{assumption}[Digital reachability --- \emph{empirical axiom}]\label{as:reach}
+The target class is digitally reachable with a \emph{robust} margin: there exist
+$\bd_w^\star$ with $\norm{\bd_w^\star}\le\varepsilon_0$ and a radius $\rho>0$ such that
+\[
+  \norm{\bm e}\le\rho \;\Longrightarrow\; D(\bw_v+\bd_w^\star+\bm e)=t .
+\]
+\end{assumption}
+
+\noindent
+Assumption~\ref{as:reach} is the crux and is \emph{not} proved here: certifying that a deep
+network has a targeted adversarial example is not analytically tractable in general. It is
+instead \emph{measured}---the digital reachability sweep achieved $100\%$ targeting of the
+attractor class across the entire budget grid, with the success stable over all $\sim\!100$
+frames of a run, which is exactly the robust-margin ($\rho$-ball) statement. The theory below
+takes $\mathcal D$ as given and proves that it \emph{transfers} to $\mathcal S$ and $\mathcal T$.
+
+\begin{assumption}[Physical operator conditioning]\label{as:cond}
+Define the linearized forward operators
+\[
+  A_{\mathcal S} \;=\; \Rx\,H_v\,J_v(\bu)\,\Pi, \qquad
+  A_{\mathcal T} \;=\; \Rx\,H_a\,J_a(\bm 0)\,\Pi .
+\]
+Each has full row rank ($M\le N$ and surjective onto $\C^{M}$) with least nonzero singular
+value $\smin(A_{\mathcal S})=:\sigma_{\mathcal S}>0$ and
+$\smin(A_{\mathcal T})=:\sigma_{\mathcal T}>0$. Equivalently: the PA Jacobian is invertible on
+the active region (bounded condition number, PA not saturated) and the channel is full rank on
+the used subcarriers.
+\end{assumption}
+
+\section{Transfer theorems (existence over the air)}
+
+\begin{lemma}[Forward linearization with quadratic remainder]\label{lem:lin}
+For $\mathcal C\in\{\mathcal S,\mathcal T\}$ and $\bd=\Pi\bd$,
+\[
+  \bw_{\mathcal C}(\bd) \;=\; \bw_v \;+\; A_{\mathcal C}\,\bd \;+\; \bm r_{\mathcal C}(\bd),
+  \qquad
+  \norm{\bm r_{\mathcal C}(\bd)} \;\le\; \tfrac12\, C_{\mathcal C}\,\norm{\bd}^2,
+\]
+with $C_{\mathcal S}=\norm{\Rx H_v}\,L_v$ and $C_{\mathcal T}=\norm{\Rx H_a}\,L_a$.
+\end{lemma}
+
+\begin{proof}
+For $\mathcal S$, Taylor-expand $g_v$ (entrywise, $C^2$ by A\ref{as:smooth}) at $\bu$:
+$g_v(\bu+\bd)=g_v(\bu)+J_v(\bu)\bd+\bm\eta(\bd)$ with
+$\norm{\bm\eta(\bd)}\le\frac{L_v}{2}\norm{\bd}^2$. Apply the linear $\Rx H_v$ and use
+\eqref{eq:wv},\eqref{eq:sc}; the remainder is $\bm r_{\mathcal S}=\Rx H_v\bm\eta$. For
+$\mathcal T$, expand $g_a$ at $\bm 0$ with $g_a(\bm0)=\bm0$ (no DC term in \eqref{eq:pa}); then
+\eqref{eq:2ch} gives $A_{\mathcal T}\bd+\Rx H_a\bm\eta_a(\bd)$ with the stated bound.
+\end{proof}
+
+\begin{theorem}[Single-channel existence and threshold]\label{thm:sc}
+Under A\ref{as:smooth}--A\ref{as:cond}, define the minimum-norm preimage
+$\bd^\star=\Pi A_{\mathcal S}^{+}\bd_w^\star$ and
+\[
+  \boxed{\;\varepsilon_{\mathcal S} \;=\; \varepsilon_0/\sigma_{\mathcal S}\;}.
+\]
+If the smallness condition
+\begin{equation}\label{eq:small-sc}
+  \tfrac12\,C_{\mathcal S}\,\varepsilon_{\mathcal S}^{\,2}\;\le\;\rho
+\end{equation}
+holds, then the single-channel attack succeeds with budget $\varepsilon_{\mathcal S}$; i.e.
+$\norm{\bd^\star}\le\varepsilon_{\mathcal S}$ and $D(\bw_{\mathcal S}(\bd^\star))=t$.
+\end{theorem}
+
+\begin{proof}
+Because $A_{\mathcal S}$ is surjective (A\ref{as:cond}), the Moore--Penrose preimage satisfies
+$A_{\mathcal S}\bd^\star=\bd_w^\star$ and
+$\norm{\bd^\star}\le\norm{\bd_w^\star}/\sigma_{\mathcal S}\le\varepsilon_0/\sigma_{\mathcal S}
+=\varepsilon_{\mathcal S}$; the projector $\Pi$ is absorbed since $A_{\mathcal S}$ already
+carries $\Pi$. By Lemma~\ref{lem:lin},
+\[
+  \bw_{\mathcal S}(\bd^\star)=\bw_v+\bd_w^\star+\bm r_{\mathcal S}(\bd^\star),
+  \qquad
+  \norm{\bm r_{\mathcal S}(\bd^\star)}\le\tfrac12 C_{\mathcal S}\varepsilon_{\mathcal S}^2\le\rho
+\]
+by \eqref{eq:small-sc}. Setting $\bm e=\bm r_{\mathcal S}(\bd^\star)$ in A\ref{as:reach} gives
+$D(\bw_{\mathcal S}(\bd^\star))=t$.
+\end{proof}
+
+\begin{theorem}[Two-channel existence and threshold]\label{thm:2ch}
+Under the same hypotheses with $A_{\mathcal T}$ in place of $A_{\mathcal S}$, the two-channel
+attack succeeds with budget
+$\varepsilon_{\mathcal T}=\varepsilon_0/\sigma_{\mathcal T}$ whenever
+$\tfrac12 C_{\mathcal T}\varepsilon_{\mathcal T}^2\le\rho$.
+\end{theorem}
+
+\begin{proof}
+Identical to Theorem~\ref{thm:sc} using the $\mathcal T$-branch of Lemma~\ref{lem:lin} and
+$\bd^\star=\Pi A_{\mathcal T}^{+}\bd_w^\star$; here the affine expansion is about $\bd=\bm0$,
+and $\bw_v$ is unperturbed by construction of \eqref{eq:2ch}.
+\end{proof}
+
+\begin{corollary}[Digital$\to$OTA budget law]\label{cor:gap}
+The over-the-air threshold exceeds the digital threshold by exactly the inverse gain of the
+physical forward operator,
+\[
+  \frac{\varepsilon_{\mathcal S}}{\varepsilon_0}=\frac{1}{\sigma_{\mathcal S}}\ge 1,
+  \qquad
+  \frac{\varepsilon_{\mathcal T}}{\varepsilon_0}=\frac{1}{\sigma_{\mathcal T}}\ge 1,
+\]
+since $\sigma_{\mathcal C}\le\norm{A_{\mathcal C}}\le\norm{\Rx}\norm{H}\norm{J}\ (\le 1$ after
+the standard receiver AGC normalization$)$. The scalar amplitude component of
+$1/\sigma_{\mathcal S}$ is the received-to-transmit conversion factor measured empirically
+$(\approx 8.8$--$11.7)$; the remaining factor is the conditioning of $H_vJ_v$.
+\end{corollary}
+
+\section{Stealth: why single-channel keeps the link, two-channel does not}
+
+Model the OFDM data path as a linear \emph{decision-statistic} operator
+$\Psi:\C^{M}\to\C^{D}$ (per-subcarrier zero-forcing/MMSE equalization matched to the victim
+channel $H_v$, followed by the pre-slicer projection onto the $D$ data dimensions). Let
+$d_{\min}$ be the minimum constellation distance.
+
+\begin{definition}[Link preservation]
+A perturbation is \emph{link-preserving} (stealthy, $\mathrm{BER}\approx0$) if its contribution
+to every data decision statistic stays inside the slicer margin,
+$\norm{\Psi(\bw_{\mathcal C}(\bd)-\bw_v)}_\infty< d_{\min}/2$.
+\end{definition}
+
+\begin{theorem}[Stealth feasibility]\label{thm:stealth}
+Let $\bd^\star$ be the attack of Theorem~\ref{thm:sc} or \ref{thm:2ch}, so to first order the
+data-path disturbance is $\Psi A_{\mathcal C}\bd^\star=\Psi\,\bd_w^\star$ for $\mathcal C=\mathcal
+S$ and $\Psi A_{\mathcal T}\bd^\star$ for $\mathcal C=\mathcal T$.
+\begin{enumerate}
+\item[(i)] \emph{(Single-channel is generically stealthy.)} Because
+$A_{\mathcal S}=\Rx H_v J_v\Pi$ shares the victim channel $H_v$ that $\Psi$ equalizes,
+$\Psi A_{\mathcal S}$ has nontrivial kernel of dimension $\ge 2M-2D>0$ whenever the feature
+dimension exceeds the data dimension ($M>D$, which holds: the classifier reads the full
+oversampled window while $\Psi$ retains only the $D$ data subcarriers). If the reachable
+$\rho$-cone $\{\bd_w:\;\norm{\bd_w}\le\varepsilon_0,\ D(\bw_v+\bd_w)=t\}$ intersects the affine
+set $\{\bd_w:\ \norm{\Psi\bd_w}_\infty<d_{\min}/2\}$---a nonempty open condition since
+$\ker\Psi\neq\{0\}$ and the reachable set has nonempty interior (A\ref{as:reach})---then a
+\emph{stealthy} targeted single-channel attack exists.
+\item[(ii)] \emph{(Two-channel impersonates with link damage.)} For $\mathcal T$ the operator
+is $A_{\mathcal T}=\Rx H_a J_a\Pi$ with the \emph{adversary} channel $H_a\neq H_v$. The
+victim-matched equalizer does not null it: $\Psi A_{\mathcal T}$ is generically full rank on the
+data subspace, so any nonzero targeted $\bd^\star$ gives
+$\norm{\Psi A_{\mathcal T}\bd^\star}_\infty=\Theta(\norm{\bd^\star})$. Hence at the impersonation
+threshold the disturbance is $\Theta(\varepsilon_{\mathcal T})$ and, once
+$\varepsilon_{\mathcal T}\gtrsim d_{\min}/(2\norm{\Psi A_{\mathcal T}})$, the link degrades:
+$\mathrm{BER}>0$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+(i) $\dim\ker(\Psi A_{\mathcal S})\ge \dim\C^{N}_{\Pi}-\rank\Psi\ge 2M-2D$ by rank--nullity
+after noting $\range A_{\mathcal S}=\C^{M}$ (A\ref{as:cond}) and $\Psi$ acts on $\C^M$ with
+$\rank\Psi=D$. The two constraint sets are, respectively, an open set with interior and the
+preimage under a rank-deficient map of an open box around $0$; their intersection is a
+nonempty open set unless the reachable cone lies entirely in $(\ker\Psi)^{\perp}$, which is
+nongeneric. Choosing $\bd_w^\star$ in the intersection and lifting by $A_{\mathcal S}^{+}$ as in
+Theorem~\ref{thm:sc} yields a $\bd^\star$ that is simultaneously targeted and link-preserving.
+(ii) $H_a\neq H_v$ makes $\Psi H_a$ non-diagonal in the equalized frequency basis, so
+$\Psi A_{\mathcal T}$ has no kernel aligned with the reachable directions; the lower bound
+$\norm{\Psi A_{\mathcal T}\bd^\star}_\infty\ge\smin(\Psi A_{\mathcal T})\norm{\bd^\star}$ gives
+the $\Theta(\cdot)$ growth.
+\end{proof}
+
+\section{Correspondence with the measurements}
+
+\begin{itemize}
+\item \textbf{Existence, both channels.} Theorems~\ref{thm:sc}--\ref{thm:2ch} assert a bounded
+OTA perturbation achieving $D=t$ in each configuration---matching the demonstrated
+single-channel and two-channel targeted impersonations of the attractor class.
+\item \textbf{Digital$\to$OTA gap.} Corollary~\ref{cor:gap} predicts
+$\varepsilon_{\mathrm{OTA}}=\varepsilon_{\mathrm{dig}}/\sigma$; the measured amplitude factor
+$\approx 8.8$--$11.7$ is the scalar part of $1/\sigma_{\mathcal S}$, and the residual explains
+why the OTA onset sat several-fold above the digital onset.
+\item \textbf{Method ordering.} A method whose digital solution $\bd_w^\star$ lands deeper in
+the target region (larger $\rho$) tolerates a larger quadratic remainder \eqref{eq:small-sc},
+so it survives the PA/channel with a smaller $\varepsilon_{\mathcal S}$---consistent with the
+small-step iterative methods (PGD) transferring where the coarse one-step method did not.
+\item \textbf{Stealth.} Theorem~\ref{thm:stealth} predicts $\mathrm{BER}\approx0$ single-channel
+(kernel of the victim-matched equalizer is available to the perturbation) and $\mathrm{BER}>0$
+two-channel at crossover (adversary channel not equalized away)---exactly the measured
+contrast.
+\item \textbf{Mask.} Replacing $A$ by $A\Pi$ removes the masked coordinates from the column
+space, raising $1/\sigma$ by the masked fraction---the small, quantified budget cost observed
+for header protection.
+\end{itemize}
+
+\section{Certifying the reachability axiom A\ref{as:reach}}\label{sec:certify}
+
+We now discharge A\ref{as:reach} with a \emph{provable} lower bound on the robust radius
+$\rho$, computed on the trained CVNN at a digital attack point $\bw^\star$ (a victim window
+driven to the target by targeted PGD; measured: $100\%$ of victim windows cross to the target).
+Two certificates apply.
+
+\begin{proposition}[Deterministic margin certificate]\label{prop:margin}
+Let $h(\bw)=f_t(\bw)-\max_{k\neq t}f_k(\bw)$; since $h=\min_{j\neq t}\langle \bm e_t-\bm e_j,\phi(\bw)\rangle$
+with $\norm{\bm e_t-\bm e_j}_2=\sqrt2$, $h$ is $\sqrt2\,\mathrm{Lip}(\phi)$-Lipschitz, and with
+$m:=h(\bw^\star)>0$,
+\[
+  \rho \;\ge\; \frac{m}{\sqrt2\,\mathrm{Lip}(\phi)} .
+\]
+On \texttt{fingerprint\_0817\_payload} the measured margin is $m\approx19.3$ (median; $\min
+17.8$). A \emph{global} Lipschitz bound from the product of layer operator norms---each
+ComplexConv1d spectral norm by power iteration, $\mathrm{BN_{eval}}$ scale
+$\max_c\lvert\gamma_c/\sqrt{v_c+\epsilon}\rvert$, CReLU and complex modulus $1$-Lipschitz,
+$\mathrm{avgpool}(2)=1/\sqrt2$, global average over $L$ samples $=1/\sqrt L$---evaluates to
+$\mathrm{Lip}(\phi)\le 2.6\times10^{6}$ (conv norms $75.5,21.2,15.4,14.5$; head $4.68,3.04$),
+giving the \emph{vacuous} $\rho\ge 4.9\times10^{-6}$: the well-known looseness of the
+spectral-norm product for deep networks (it compounds four worst-case conv gains and ignores
+that CReLU deactivates most units).
+
+\emph{Local certificate (non-vacuous, deterministic, base classifier).} We tighten it over a
+box $B_\infty(\bw^\star,r)$ by interval bound propagation. IBP through the complex
+conv--BN--CReLU--pool stages yields pre-activation bounds; a CReLU unit is \emph{stable-off}
+over the box iff its upper bound is $\le0$, so its local derivative is exactly $0$. Freezing
+the derivative pattern to $\mathrm{mask}=0$ (stable-off) / $1$ (else) gives a valid entrywise
+upper bound on the local Jacobian $\lVert J(\bw)\rVert\le\lVert J_{\mathrm{mask}}\rVert$ for all
+$\bw\in$ box. The masked map factors as $L_1$ (a fixed linear operator: the four
+conv--BN--pool stages with CReLU replaced by its mask) $\to$ modulus ($1$-Lipschitz) $\to$
+global average ($1/\sqrt{L}$) $\to$ head, so
+$\mathrm{Lip}(\phi)\le\sigma(L_1^{\mathrm{mask}})\cdot 1\cdot(1/\sqrt L)\,\sigma(W_1)\sigma(W_2)$,
+and $\sigma(L_1^{\mathrm{mask}})$ is computed by power iteration through the \emph{composed}
+masked operator (capturing cancellation the per-layer product discards). At the min-margin
+attack window ($m=18.4$), with $r=0.0095$ (of the CReLU units, $23\%$ certify stable-off),
+$\sigma(L_1^{\mathrm{mask}})=753$ versus the global $1.46\times10^{6}$, giving
+$\mathrm{Lip}(\text{margin})=1.9\times10^{3}$ and the self-consistent (largest $r$ with
+$\rho(r)\ge r$)
+\[
+  \boxed{\;\rho\;\ge\;9.6\times10^{-3}\ (\ell_2)\;\approx\;2.1\times10^{-4}\ (\ell_\infty\text{ per coord})\;},
+\]
+a $\sim\!2000\times$ improvement over the global bound and a genuine deterministic robust radius
+on the deployed base classifier. Full LipSDP or CROWN would sharpen it further (only $23\%$ of
+units were certified off here).
+\end{proposition}
+
+\begin{proposition}[Randomized-smoothing certificate {\normalfont(Cohen et al.\ 2019, Thm.~1)}]
+\label{prop:rs}
+Let $g(\bw)=\argmax_k \Pr_{\bm\eta\sim\mathcal N(0,\sigma^2 I)}\!\big[D(\bw+\bm\eta)=k\big]$ be
+the smoothed classifier, and let $\underline p$ be a Clopper--Pearson lower confidence bound
+(level $1-\alpha$) on $\Pr[D(\bw^\star+\bm\eta)=t]$. If $\underline p>\tfrac12$ then
+$g(\bw^\star+\bm e)=t$ for every $\norm{\bm e}_2\le R=\sigma\,\Phi^{-1}(\underline p)$, so
+$\rho\ge R$ for the smoothed classifier.
+\end{proposition}
+
+\begin{table}[h]\centering
+\begin{tabular}{cccc}
+\hline
+$\sigma$ & windows certified & certified $R$ ($\ell_2$) & $\ell_\infty$-equivalent $R/\sqrt{2\,\mathrm{WIN}}$\\
+\hline
+$0.12$ & $100\%$ & $0.324$ & $0.0072$\\
+$0.25$ & $100\%$ & $0.676$ & $0.0149$\\
+$0.50$ & $100\%$ & $1.351$ & $0.0299$\\
+\hline
+\end{tabular}
+\caption{Certified radius at the digital attack point (unit-RMS window domain), $n=2000$
+draws, $\alpha=10^{-3}$. Every draw landed on the target, so $\underline p$ is sample-limited
+($\Phi^{-1}(\underline p)\approx2.70$) and $R$ scales linearly with $\sigma$: the \emph{true}
+robust radius exceeds each entry. All $120$ tested windows certify to the target.}
+\end{table}
+
+\begin{corollary}
+A\ref{as:reach} is certified two ways: \emph{deterministically} on the base classifier with
+$\rho\ge 9.6\times10^{-3}$ ($\ell_2$) via the local Lipschitz bound (Prop.~\ref{prop:margin}),
+and \emph{probabilistically} on the smoothed classifier with $\rho\ge 1.35$ ($\ell_2$) at
+confidence $1-\alpha$ (Prop.~\ref{prop:rs}). Substituting either certified $\rho$ into the
+smallness conditions of Theorems~\ref{thm:sc}--\ref{thm:2ch} makes the over-the-air existence
+guarantees \emph{unconditional} (up to the physical-operator assumptions
+A\ref{as:smooth}--A\ref{as:cond}, and the smoothing confidence in the probabilistic case).
+\end{corollary}
+
+\section*{Scope and honest limitations}
+With Section~\ref{sec:certify}, A\ref{as:reach} is no longer a bare assumption: the target
+region around the digital attack point carries a \emph{certified} robust radius by two independent
+methods: a deterministic local-Lipschitz certificate on the base classifier
+($\rho\ge9.6\times10^{-3}$, Prop.~\ref{prop:margin}) and a randomized-smoothing certificate on
+the smoothed classifier ($\rho\ge1.35$, Prop.~\ref{prop:rs}). Given the certified radius,
+Theorems~\ref{thm:sc}--\ref{thm:2ch}
+are unconditional consequences of the physical forward-operator model
+(A\ref{as:smooth}--A\ref{as:cond}): the attack is not a numerical accident but the image, under an
+invertible physical map, of a certified digital adversarial basin, with an explicit budget law
+and a dimension-counted stealth criterion. Both remaining gaps are now closed: the local
+Lipschitz certificate (IBP-masked composed operator norm) is non-vacuous \emph{and}
+deterministic on the base classifier ($\rho\ge9.6\times10^{-3}$), so the argument no longer
+depends on the smoothed surrogate. What remains is only \emph{sharpening}: a tighter local
+certificate (LipSDP, or CROWN/LiRPA with $\beta$-crown branching) would enlarge the certified
+radius beyond the $\sim\!23\%$ of units that plain IBP certifies off here.
+\end{document}

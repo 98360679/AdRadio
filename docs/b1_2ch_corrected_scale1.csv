@@ -1,0 +1,17 @@
+# CORRECTED 2-channel B1: SCALE=1 (do NOT scale delta for 2-channel). Victim device_5 @13dB.
+# untargeted PGD-a0.10 eps=0.03, adversary power swept to the 35 dB hardware ceiling (+22 dB).
+psr_db,adv_gain_db,fool_pct,land,frames_decoded,ber
+-6,7,0.0,device_5,107,0
+-2,11,0.0,device_5,107,0
+0,13,0.0,device_5,107,0
+2,15,0.0,device_5,107,0
+4,17,0.0,device_5,107,0
+6,19,0.0,device_5,107,0
+8,21,0.0,device_5,107,0
+10,23,0.0,device_5,107,0
+12,25,0.0,device_5,107,0
+14,27,0.0,device_5,107,0
+16,29,0.0,device_5,107,0
+18,31,0.0,device_5,107,0
+20,33,0.0,device_5,107,2.80e-05
+22,35,3.2,device_5,107,7.24e-05

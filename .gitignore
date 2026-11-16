@@ -1,0 +1,24 @@
+# ── Raw datasets — host on OneDrive / IEEE DataPort, never in git ──
+captures/
+*.bin
+*.rxlog
+*.sigmf-data
+
+# ── Trained models — optional; host on OneDrive models/ ──
+*.pt
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# ── Local run outputs written to the repo root (not shipped artifacts) ──
+/reachability_quickstart.csv
+/reachability_extgrid.csv
+/enroll_gains.csv
+/flowgraphs/logs/
+
+# ── OS / editor ──
+.DS_Store
+*.swp
+*~

@@ -1,0 +1,12 @@
+# B1 absolute-gain adversary-power sweep, 2-channel SCALE=1 (not scaled), stealthy delta eps=0.03.
+# victim device_5 @ 13.0 dB (= enrolled 0.3689). 3 runs. fool% (max-over-phase), lands device_5 throughout.
+psr_db,adv_gain_db,fool_run1,fool_run2,fool_run3,lands,frames_decoded,ber
+-6,7,0,0,0,device_5,107,0
+-4,9,0,0,0,device_5,107,0
+-2,11,0,0,0,device_5,107,0
+0,13,0,0,0,device_5,107,0
+2,15,0,0,0,device_5,107,0
+4,17,0,0,0,device_5,107,0
+6,19,0,0,0,device_5,107,0
+8,21,0,0,0,device_5,107,0
+10,23,0,0,0,device_5,107,0
