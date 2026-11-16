@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import csv, os
 import os
 CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
-CAP=f'{CAPTURES}/attack_b1'
+CAP='docs'
 PSR_MEAS={20:-4.5,25:1.7,30:6.3,35:9.9,40:10.0}
 def g2psr(g): return PSR_MEAS[g] if g in PSR_MEAS else -4.5+(g-20)
 BPF=4000
