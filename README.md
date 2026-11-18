@@ -11,9 +11,10 @@ This README is the **WiSec 2027 artifact entry point**: it documents the environ
 experiment we ran, and the exact step-by-step commands to reproduce each result and figure.
 
 > **This repo is code only.** It contains the scripts, the shipped result tables/figures (`docs/`),
-> and the GNU Radio flowgraphs. The **raw I/Q datasets (~1.3 TB)** and the **trained models (`*.pt`)**
-> are hosted on **OneDrive** (§3) — download the pieces you need. Every figure and table can be
-> re-rendered from the shipped `docs/*.csv` with **no download and no hardware** (§5, §8).
+> and the GNU Radio flowgraphs. Every figure and table re-renders from the shipped `docs/*.csv` with
+> **no download and no hardware** (§5, §8). A small **recompute bundle** (enrollment + models, ~19 GB)
+> and the trained models are hosted externally and are needed only to recompute from scratch — see the
+> reproduction tiers in §3.
 
 > **Terminology (paper vs. code).** The paper calls the **1,024-sample model input** an **I/Q frame**
 > (the sliding-window input, matching our prior work — 1,024 samples here vs. 288 there). In the code and
@@ -35,7 +36,7 @@ experiment we ran, and the exact step-by-step commands to reproduce each result 
 
 1. [What this reproduces](#1-what-this-reproduces)
 2. [Repository layout](#2-repository-layout)
-3. [Datasets & models (OneDrive)](#3-datasets--models-onedrive)
+3. [Datasets & models](#3-datasets--models)
 4. [Environment & hardware](#4-environment--hardware)
 5. [Quick start — reproduce results without radios](#5-quick-start--reproduce-results-without-radios)
 6. [Full capture → attack pipeline (step by step)](#6-full-capture--attack-pipeline-step-by-step)
@@ -126,9 +127,9 @@ AdvRadio/                             # this repo — WiSec 2027 artifact (code 
     └── *.md                          #   result write-ups (B1_mean_results.md, VII-B1_…, etc.)
 ```
 
-**Hosted on OneDrive, not in git (§3):** the raw I/Q datasets (`captures/`, ~1.3 TB) and the trained
-models (`*.pt`). Download the five canonical models to the repo root before running any script that
-takes `--model` (§3.2); download `captures/` only for the from-raw pipeline (§6).
+**Hosted externally, not in git (§3):** the enrollment + models **recompute bundle** (~19 GB) and the
+raw OTA capture sessions (provenance). Download the bundle only to recompute from scratch (Tier 2);
+every figure/table regenerates from the shipped `docs/` with nothing downloaded (Tier 1).
 
 **Required separately for OTA (§4):** the `gr-foo` and `gr-ieee802-11` GNU Radio 3.10 OOT modules, built
 and installed. They are **not** vendored here; the `flowgraphs/` scripts import the installed
@@ -140,24 +141,36 @@ index is `docs/exp3_all_results_byexp.xlsx`. Superseded/dated snapshots from the
 
 ---
 
-## 3. Datasets & models (OneDrive)
+## 3. Datasets & models
 
-The raw I/Q captures (**~1.3 TB**) and the trained models are hosted on **OneDrive** (not in git):
+Reproduction has tiers; **most reviewers need nothing beyond this repo.**
+
+| Tier | Reproduces | Data to download | Size |
+|---|---|---|---|
+| **1 — Results** | every figure, table, and the workbook | **nothing** — the shipped `docs/*.csv` in this repo (verified: 36/36 `make_*.py` regenerate) | **0** |
+| **2 — Recompute** | E1 reachability, the A-series, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19 GB** |
+| **3 — Re-score raw OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs | ~90 GB |
+| **4 — Re-run OTA** | the whole pipeline | everything **+ the radios (§4)** | — |
+
+So: **clone the repo and run the scripts to reproduce every reported result.** Download data only to
+recompute from scratch.
+
+### Minimal bundle (Tier 2) — OneDrive
 
 > **Download:** `<<< PASTE ONEDRIVE LINK HERE >>>`  *(also cited in the paper)*
 
-The OneDrive share has two top-level folders:
+```
+captures/
+├── enrollment/           #   per-device enrollment captures (§3.1)   ~19 GB
+└── attack_assets/        #   victim replay + δ waveform (ch0_run3_107.bin, ch1_e04_s1.bin)  ~0.3 GB
+models/                   #   fingerprint_{cvnn,cnn1d,freqcvnn}.pt (§3.3)  ~4 MB
+```
 
-```
-captures/                 # raw I/Q (§3.1, §3.2) — needed only for the from-raw pipeline (§6)
-├── enrollment/           #   per-device enrollment captures (§3.1)
-├── validation/           #   cross-day BER/decode validation captures
-└── attack_*/             #   role-based attack data (§3.2)
-models/                   # trained *.pt (§3.3) — needed for any --model command
-```
+The raw OTA capture sessions (Tier 3, ~90 GB of `rx_*.bin`) are provenance for byte-level audit and are
+**available on request / on the dataset DOI**, not in the minimal bundle.
 
 **Setting the location.** Every script reads the captures root from the `CAPTURES_ROOT` environment
-variable, defaulting to `~/captures`. Point it at wherever you downloaded the data:
+variable, defaulting to `~/captures`. Point it at wherever you unpacked the bundle:
 ```bash
 export CAPTURES_ROOT=/path/to/captures
 ```
@@ -187,9 +200,13 @@ Then copy the three models (§3.3) into the repo root (scripts take `--model fin
     samples each), and the counts follow: e.g. 6,731 Normal 802.11 frames × 13 = 87,503 I/Q frames; the
     107-frame OTA replay × 13 = 1,391 I/Q frames.
 
-### 3.2 Attack data — `${CAPTURES_ROOT}/attack_*/`
+### 3.2 Attack data — `${CAPTURES_ROOT}/attack_*/` (Tier 3, provenance)
 
-The artifact uses these role-based attack directories; place the corresponding captures in each:
+These are the **raw OTA capture sessions** — needed only to re-score the over-the-air results from the
+raw `rx_*.bin` recordings (Tier 3) or re-transmit them (Tier 4). The **derived result CSVs the figures
+actually read ship in `docs/`** (Tier 1), so you do *not* need these dirs to regenerate any figure. The
+only part in the minimal bundle is `attack_assets/`'s small TX waveforms (`ch0_run3_107.bin`,
+`ch1_e04_s1.bin`). The role-based dirs:
 
 | Directory | Role | Key contents |
 |---|---|---|
@@ -261,7 +278,7 @@ The `flowgraphs/` scripts import `ieee802_11`.
 
 ## 5. Quick start — reproduce results without radios
 
-Everything below needs only Python + the shipped CSVs in `docs/` (no hardware, no 1.3 TB download).
+Everything below needs only Python + the shipped CSVs in `docs/` (no hardware, no data download).
 
 > **No models needed for the headline reproduction.** Parts **A** (all figures) and **B** (the
 > workbook) regenerate every result from the shipped `docs/*.csv` with **no `.pt` and no data download**
