@@ -561,6 +561,15 @@ leakage-safe split train-on-runs-1–2 / test-on-run-3; best model is the freque
 artifact**; it is provided alongside the dataset bundle on OneDrive. This repo reproduces the **attack**
 results against that classifier.
 
+**Clean baseline of the attacked classifier.** The 5-device CVNN this artifact ships (`fingerprint_cvnn.pt`)
+has its own pre-attack accuracy, reproducible here from the enrollment bundle:
+```bash
+python3 exp3_validation_confusion.py          # held-out run-3 validation, frame-level majority vote
+```
+**95.98% frame-level** (92.34% per I/Q frame), over 523 frames — four devices at 98–100%, `device_2` the
+only material confusion (82.1%). Full confusion matrix in `docs/validation_confusion.{md,csv}`. This is
+the clean baseline the E1–E3 / A / B results degrade from.
+
 ---
 
 ## 10. Reading results

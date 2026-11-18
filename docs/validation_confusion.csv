@@ -1,0 +1,17 @@
+"# held-out run-3 validation confusion for fingerprint_cvnn.pt (frame-level overall 95.98%, window-level 92.34%)"
+# frame-level
+true\pred,device_1,device_2,device_3,device_4,device_5,total,correct,accuracy
+device_1,105,0,0,0,0,105,105,1.0000
+device_2,0,87,15,4,0,106,87,0.8208
+device_3,0,0,101,2,0,103,101,0.9806
+device_4,0,0,0,105,0,105,105,1.0000
+device_5,0,0,0,0,104,104,104,1.0000
+TOTAL,105,87,116,111,104,523,502,0.9598
+# window-level
+true\pred,device_1,device_2,device_3,device_4,device_5,total,correct,accuracy
+device_1,1347,18,0,0,0,1365,1347,0.9868
+device_2,53,1014,234,65,12,1378,1014,0.7358
+device_3,0,1,1305,33,0,1339,1305,0.9746
+device_4,0,0,105,1260,0,1365,1260,0.9231
+device_5,0,0,0,0,1352,1352,1352,1.0000
+TOTAL,1400,1033,1644,1358,1364,6799,6278,0.9234
