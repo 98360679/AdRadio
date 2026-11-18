@@ -22,3 +22,6 @@ __pycache__/
 .DS_Store
 *.swp
 *~
+
+# CNN1D feature cache (runtime)
+.cnn1d_cache/

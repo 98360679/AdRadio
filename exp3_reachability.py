@@ -19,6 +19,8 @@ EPSILONS = [0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.2,0.3,0.4,0.5,0.6,0.7,0.8,
 ATTACKS = {k: v for k, v in ATTACKS.items() if k in ('fgsm', 'bim', 'mim') or k.startswith('pgd')}
 from exp3_cvnn import CVNN
 from exp3_fp_model import NUM_CLASSES, DEVICE_NAMES
+import os
+CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
 
 MODEL = 'fingerprint_cvnn.pt'
 BASE = f'{CAPTURES}/enrollment'
@@ -30,8 +32,6 @@ OUT = 'reachability_extgrid.csv'
 
 # --- optional overrides so the same sweep can be run on a different epsilon grid ---
 import argparse as _argparse
-import os
-CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
 _ap = _argparse.ArgumentParser()
 _ap.add_argument('--epsilons', help='comma-separated grid, overrides EPSILONS')
 _ap.add_argument('--out', help='output csv, overrides OUT')

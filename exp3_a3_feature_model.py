@@ -55,6 +55,7 @@ def main():
     ap.add_argument('--val-run', type=int, default=3)
     ap.add_argument('--cache', default='.cnn1d_cache/train.npz')
     a = ap.parse_args()
+    os.makedirs(os.path.dirname(a.cache), exist_ok=True)
     dev = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0); np.random.seed(0)
 
