@@ -53,11 +53,11 @@ data and models are hosted externally (reproduction tiers in **§7**).
 physical realism); Experiments 4–5 vary *what* classifier is attacked and *how realistic* the adversary
 is.
 
-| Experiment 1-3 | How δ is delivered | Radio? | δ scaling |
+| Experiment 1-3 | One-line finding | Radio? | δ scaling |
 |---|---|---|---|
-| **Experiment 1: Type I Baseline** | Perturbation applied directly at the classifier input, without radio hardware | no | — |
-| **Experiment 2: Type II Adversary** | Perturbation added to the victim signal prior to transmission | yes | SCALE ≈ 13.06 |
-| **Experiment 3: Type III Adversary** | Perturbation transmitted from a separate adversarial radio (over the air) | yes | SCALE = 1 |
+| **Experiment 1: Type I Baseline** | Perturbing I/Q frames easily fools the classifier, but even strong perturbations still decode — a software upper bound | no | — |
+| **Experiment 2: Type II Adversary** | An adversary perturbing at the transmitter forces misidentification while the receiver still decodes with no bit errors | yes | SCALE ≈ 13.06 |
+| **Experiment 3: Type III Adversary** | A separate adversary radio fools the classifier over the air without bit errors, but only in a narrow range; full evasion becomes detectable | yes | SCALE = 1 |
 
 **Experiment 4: Robustness Against Authentication Model Variations.** Does the fragility depend on the
 classifier? Four variations (Exp 4.4 is reported as a table):
