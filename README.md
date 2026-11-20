@@ -43,8 +43,7 @@ data and models are hosted externally (reproduction tiers in **§7**).
 6. [Quick start — reproduce results without radios](#6-quick-start--reproduce-results-without-radios)
 7. [Datasets & models](#7-datasets--models)
 8. [Regenerating every figure, table, and workbook](#8-regenerating-every-figure-table-and-workbook)
-9. [The baseline classifier](#9-the-baseline-classifier)
-10. [Reading results](#10-reading-results)
+9. [Reading results](#9-reading-results)
 
 ---
 
@@ -557,29 +556,7 @@ done
 
 ---
 
-## 9. The baseline classifier
-
-The attacks target a **victim classifier** — a device-fingerprinting study of its own (4 devices ×
-2 days × {time, freq} × {CNN1D, CVNN}; energy-detected 512-sample windows, power-normalized,
-leakage-safe split train-on-runs-1–2 / test-on-run-3; best model is the frequency-domain CNN1D at
-99.3% Day1, 95.4% Day2 frame-level). That baseline study (`radio_fingerprint/`, with `build_dataset.py`,
-`train.py`, `plots_eda.py`, and `REPORT.pdf`) is a **separate codebase and is not part of this
-artifact**; it is provided alongside the dataset bundle on OneDrive. This repo reproduces the **attack**
-results against that classifier.
-
-**Clean baseline of the attacked classifier.** The 5-device CVNN this artifact ships
-(`trained_models/fingerprint_cvnn.pt`) has its own pre-attack accuracy, reproducible here from the
-enrollment bundle:
-```bash
-python3 training/validation_confusion.py   # held-out run-3 validation, frame-level majority vote
-```
-**95.98% frame-level** (92.34% per I/Q frame), over 523 frames — four devices at 98–100%, `device_2` the
-only material confusion (82.1%). Full confusion matrix in `docs/validation_confusion.{md,csv}`. This is
-the clean baseline that the Experiment 1–5 attack results degrade from.
-
----
-
-## 10. Reading results
+## 9. Reading results
 
 Score-CSV columns: `epsilon, fool_pct, landed, device_1..5 (counts), frames_decoded, bit_errors, ber,
 bits_compared`.
