@@ -161,7 +161,9 @@ recompute from scratch.
 
 ### Minimal bundle (Tier 2) — OneDrive
 
-> **Download:** `<<< PASTE ONEDRIVE LINK HERE >>>`  *(also cited in the paper)*
+> **Download:** <https://uofnebraska-my.sharepoint.com/:f:/g/personal/98360679_nebraska_edu/IgDLBegB2Vk1QKrjYaZdmbXrAdCCzBtYiBOjWo1bUS7E3fk?e=kaU0lv>  *(also cited in the paper)*
+>
+> After downloading, set `CAPTURES_ROOT` to the bundle root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
 
 ```
 captures/
