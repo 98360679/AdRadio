@@ -7,7 +7,7 @@ clean baseline the adversarial results degrade from.
 Regenerate from the shipped bundle (enrollment + `fingerprint_cvnn.pt`):
 ```bash
 export CAPTURES_ROOT=/path/to/captures
-python3 exp3_validation_confusion.py          # -> docs/validation_confusion.csv
+python3 validation_confusion.py          # -> docs/validation_confusion.csv
 ```
 
 **Frame-level accuracy: 95.98%** · per-I/Q-frame (window-level): 92.34% · over 523 frames.

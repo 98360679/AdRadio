@@ -12,7 +12,7 @@ match the paper's stated distributions exactly. The pinned checkpoint is the des
 
 ## Drift-augmentation — faithful to the paragraph
 
-`drift_augment` (`exp3_cvnn.py:21`) is invoked in the training loop (`exp3_cvnn.py:221`) on every
+`drift_augment` (`cvnn.py:21`) is invoked in the training loop (`cvnn.py:221`) on every
 batch, gated by `--no-aug` which defaults to OFF (augmentation ON). It is applied to TRAINING
 batches only; validation (`per_device_eval`) runs on raw windows.
 
@@ -42,7 +42,7 @@ phase ramp of up to ~±220°, a real inter-run drift, not a negligible one.
 The augmentation draws ARE governed by a seed, with three caveats worth stating in the methods:
 
 1. **Seeded, single global stream.** `main()` sets `torch.manual_seed(0); np.random.seed(0)` once
-   (`exp3_cvnn.py:198`); `torch.manual_seed` also seeds the CUDA generator, so the phase/CFO/shift/
+   (`cvnn.py:198`); `torch.manual_seed` also seeds the CUDA generator, so the phase/CFO/shift/
    noise draws are reproducible. But they share the global RNG with model init, `DataLoader(shuffle=
    True)`, and dropout — so the augmentation stream is reproducible only if the entire RNG-consumption
    sequence is unchanged (same batch size, same architecture, same call order). There is no dedicated

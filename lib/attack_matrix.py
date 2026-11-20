@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-exp3_attack_matrix.py — full white-box adversarial attack matrix vs the Experiment-3 CVNN.
+attack_matrix.py — full white-box adversarial attack matrix vs the Experiment-3 CVNN.
 
 Follows the Experiment-1 docx methodology (28 epsilons 0.0001..0.10, PGD 10 steps,
 per-input L_inf perturbation, accuracy + targeted-% + empirical BPSK-BER proxy) and
@@ -22,7 +22,7 @@ Input = unit-RMS complex 1024-window fed to the CVNN as (re, im). delta is L_inf
 on (re, im) — the canonical white-box RX-side injection.
 
 Usage:
-  python3 exp3_attack_matrix.py \
+  python3 attack_matrix.py \
     --model trained_models/fingerprint_cvnn.pt \
     --data-root $CAPTURES_ROOT/attack_enroll/day1/exp1 \
     --out-csv attack_matrix.csv --out-report attack_matrix_tables.txt \
@@ -30,9 +30,9 @@ Usage:
 """
 import argparse, os, glob, csv, time
 import numpy as np, torch, torch.nn.functional as F
-from exp3_cvnn import CVNN, iq_to_complex, to_reim
-from exp3_fp_model import frame_to_windows, NUM_CLASSES, WIN
-from exp3_extract_frames import extract_frames_for_file
+from cvnn import CVNN, iq_to_complex, to_reim
+from fp_model import frame_to_windows, NUM_CLASSES, WIN
+from extract_frames import extract_frames_for_file
 
 EPSILONS = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009,
             0.001,  0.002,  0.003,  0.004,  0.005,  0.006,  0.007,  0.008,  0.009,

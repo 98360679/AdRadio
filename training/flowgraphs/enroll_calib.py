@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-lab_exp3_enroll_calib.py — per-device enrollment capture with TX-gain calibration.
+enroll_calib.py — per-device enrollment capture with TX-gain calibration.
 
 EFFICIENT design (devices take >60s to init): the TX flowgraph is brought up ONCE and
 kept resident; tx_gain is changed LIVE (set_normalized_gain) between probes, so we pay the
@@ -13,7 +13,7 @@ Loop for ONE device:
   'signal dB'; secant-adjust} until |signal-target|<=tol -> lock gain -> 30s RX clean_run
   capture (TX still resident at locked gain) -> record gain -> caller prompts to swap.
 
-  python3 lab_exp3_enroll_calib.py --device-id 1 --tx-serial 325426C
+  python3 enroll_calib.py --device-id 1 --tx-serial 325426C
 
 The capture tree (enrollment|validation) is a parameter (--tree). It sets ENROLL_DIR and
 is written into the capture paths inside wifi_tx_updated.py / wifi_rx.py via

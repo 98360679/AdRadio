@@ -29,9 +29,9 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-from exp3_cvnn import CVNN, build
-from exp3_fp_model import NUM_CLASSES, FS
-from exp3_attack_matrix import craft, to_reim_t, predict, ATTACKS
+from cvnn import CVNN, build
+from fp_model import NUM_CLASSES, FS
+from attack_matrix import craft, to_reim_t, predict, ATTACKS
 import os
 CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
 

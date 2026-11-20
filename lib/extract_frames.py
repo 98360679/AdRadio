@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-exp3_extract_frames.py — Stage 1 of the fingerprinting pipeline
+extract_frames.py — Stage 1 of the fingerprinting pipeline
 ────────────────────────────────────────────────────────────────
 Detect WiFi frame bursts in each capture and save onset-aligned FULL frames
 (preamble + payload) so the later perturbation study can corrupt the payload.
@@ -19,8 +19,8 @@ For every (device, run):
         peak   : (N,) float32     burst peak power (QC)
 
 Run:
-  python3 exp3_extract_frames.py                    # all devices, default paths
-  python3 exp3_extract_frames.py --devices 1 2      # subset
+  python3 extract_frames.py                    # all devices, default paths
+  python3 extract_frames.py --devices 1 2      # subset
 """
 import os, sys, time, argparse
 import numpy as np

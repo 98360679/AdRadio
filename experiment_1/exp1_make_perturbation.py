@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-exp3_make_perturbation.py — craft a per-frame PGD perturbation vs the fingerprint CNN
+exp1_make_perturbation.py — craft a per-frame PGD perturbation vs the fingerprint CNN
 ──────────────────────────────────────────────────────────────────────────────────
 
-White-box, untargeted PGD against the model we trained (exp3_train_fingerprint.py),
+White-box, untargeted PGD against the model we trained (train_fingerprint.py),
 so the perturbation is faithful to the preprocessing it will face at the receiver.
 
 OTA picture (per-frame):
@@ -22,7 +22,7 @@ Outputs (complex64 @ 5 MHz, both length L, sample-for-sample aligned):
   perturbation.bin  delta                (scaled to PSR vs frame, padded to L)
 
 Run (after training):
-  .venv/bin/python exp3_make_perturbation.py --device 1 --psr -20 \
+  .venv/bin/python exp1_make_perturbation.py --device 1 --psr -20 \
         --out-frame /dev/shm/frame.bin --out-pert /dev/shm/perturbation.bin
 """
 import os as _os, sys as _sys
@@ -30,6 +30,7 @@ _R = _os.path.abspath(_os.path.dirname(__file__))
 while _R != _os.path.dirname(_R) and not _os.path.isdir(_os.path.join(_R, ".git")):
     _R = _os.path.dirname(_R)
 _sys.path.insert(0, _os.path.join(_R, "lib"))
+_sys.path.insert(0, _os.path.join(_R, "training"))
 _os.chdir(_R)
 
 import os
@@ -39,10 +40,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from exp3_fp_model import (FingerprintCNN, frame_to_windows, torch_iq_to_input,
+from fp_model import (FingerprintCNN, frame_to_windows, torch_iq_to_input,
                            iq_to_input, NUM_CLASSES, DEVICE_NAMES,
                            WIN, ACTIVE, PRE_ROLL, FRAME_LEN, FS)
-from exp3_train_fingerprint import load_frames, LOCAL_PT, SAVE_PT
+from train_fingerprint import load_frames, LOCAL_PT, SAVE_PT
 
 _EPS = 1e-12
 

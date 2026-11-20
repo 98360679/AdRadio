@@ -6,7 +6,7 @@ architecture, or of the RF-fingerprinting task itself?
 
 **Method.** Train a real-valued 1D CNN on the same enrollment windows and re-run the
 reachability matrix and attack sweep on it, then compare. To isolate real-vs-complex, the CNN1D
-(`exp3_cnn1d.py`) mirrors the CVNN layer-for-layer — same channels (32/64/128/128), kernels
+(`cnn1d.py`) mirrors the CVNN layer-for-layer — same channels (32/64/128/128), kernels
 (7/5/5/3), pooling, and head — but uses ordinary real convolutions over a 2-channel (real, imag)
 input. Its `forward(re, im)` matches the CVNN interface, so the existing attack, targeted-PGD, and
 reachability code runs unchanged: the same input convention, the same L-infinity budget, the same

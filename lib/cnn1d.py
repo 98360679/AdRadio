@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""exp3_cnn1d.py -- real-valued 1D-CNN fingerprint classifier (variation A1).
+"""cnn1d.py -- real-valued 1D-CNN fingerprint classifier (variation A1).
 
 Real-valued control for the CVNN. Mirrors the CVNN layer structure EXACTLY -- same channel
 progression (32/64/128/128), same kernels (7/5/5/3), same length-2 pooling, same real head
@@ -21,8 +21,8 @@ label-smoothing schedule, val_run held out. Train on the same cleaned symlink ro
 import argparse
 import numpy as np, torch, torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
-from exp3_fp_model import NUM_CLASSES
-from exp3_cvnn import build, drift_augment, per_device_eval, n_params, to_reim
+from fp_model import NUM_CLASSES
+from cvnn import build, drift_augment, per_device_eval, n_params, to_reim
 
 
 class CNN1DFp(nn.Module):

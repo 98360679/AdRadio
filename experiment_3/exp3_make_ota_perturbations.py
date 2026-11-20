@@ -3,7 +3,7 @@
 exp3_make_ota_perturbations.py — craft OTA-transmittable delta from the attack matrix.
 
 For every (attack method, epsilon) it crafts a TARGETED delta (Dev6->Dev1) against the
-victim replay ch0, using the same FGSM/BIM/MIM/PGD craft() as exp3_attack_matrix, then
+victim replay ch0, using the same FGSM/BIM/MIM/PGD craft() as attack_matrix, then
 stores the delta COMPACTLY (active region only, 100 frames x ACTIVE complex64 ~= 11.5 MB).
 The full single-channel (ch0+delta) and 2-channel (delta) OTA waveforms are materialised
 on demand by exp3_expand_ota_perturbation.py.
@@ -29,9 +29,9 @@ _sys.path.insert(0, _os.path.join(_R, "lib"))
 _os.chdir(_R)
 import argparse, os, csv, time
 import numpy as np, torch
-from exp3_cvnn import CVNN, iq_to_complex, to_reim
-from exp3_fp_model import PRE_ROLL, ACTIVE, WIN, NUM_CLASSES, DEVICE_NAMES, frame_to_windows
-from exp3_attack_matrix import craft, ATTACKS, EPSILONS
+from cvnn import CVNN, iq_to_complex, to_reim
+from fp_model import PRE_ROLL, ACTIVE, WIN, NUM_CLASSES, DEVICE_NAMES, frame_to_windows
+from attack_matrix import craft, ATTACKS, EPSILONS
 
 FRAME_PERIOD = 65661
 FRAME_LEN = PRE_ROLL + ACTIVE            # 500 + 13312 = 13812 (window span)
@@ -131,8 +131,8 @@ def main():
     torch.manual_seed(a.seed); np.random.seed(a.seed)
     dev = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    from exp3_cnn1d import CNN1DFp
-    from exp3_freqcvnn import FreqCVNN
+    from cnn1d import CNN1DFp
+    from freqcvnn import FreqCVNN
     ARCH = {'cvnn': CVNN, 'cnn1d': CNN1DFp, 'freqcvnn': FreqCVNN}
     m = ARCH[a.arch](NUM_CLASSES).to(dev)
     m.load_state_dict(torch.load(a.model, map_location=dev, weights_only=False)); m.eval()
@@ -140,7 +140,7 @@ def main():
 
     if a.from_capture:
         # live capture: the strobe is NOT periodic, so detect the bursts and keep their offsets
-        from exp3_extract_frames import extract_frames_for_file
+        from extract_frames import extract_frames_for_file
         det, starts = extract_frames_for_file(a.ch0, floor_pct=20.0, thr_mult=a.thr_mult)[:2]
         # frames_from_ch0 slices FRAME_LEN+WIN; the detector returns FRAME_LEN, so re-slice
         ch0 = np.fromfile(a.ch0, dtype=np.complex64)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-exp3_cvnn.py — complex-valued CNN (CVNN) fingerprinter for experiment_3.
+cvnn.py — complex-valued CNN (CVNN) fingerprinter for experiment_3.
 
 PyTorch port of the experiment_1/2 complex primitives (ComplexConv1D = 4 real convs
 rr/ri/ir/ii; ComplexBatchNorm; ComplexAvgPool; CReLU; ComplexDropout), built at exp3's
@@ -10,13 +10,13 @@ attack tooling can differentiate the loss w.r.t. the input IQ.
 
 Trains on the fresh varied 3-run enrollment (leakage-safe run-3 holdout).
 
-  python3 exp3_cvnn.py --root $CAPTURES_ROOT/train --val-run 3 --epochs 30
+  python3 cvnn.py --root $CAPTURES_ROOT/train --val-run 3 --epochs 30
 """
 import os, re, glob, json, math, argparse, numpy as np, torch, torch.nn as nn, torch.nn.functional as F
 CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
 from torch.utils.data import TensorDataset, DataLoader
-from exp3_fp_model import frame_to_windows, NUM_CLASSES, DEVICE_NAMES, WIN, FS
-from exp3_extract_frames import extract_frames_for_file
+from fp_model import frame_to_windows, NUM_CLASSES, DEVICE_NAMES, WIN, FS
+from extract_frames import extract_frames_for_file
 
 
 def drift_augment(w, cfo_max=3000.0, snr_lo=8.0, snr_hi=30.0, tmax=6):

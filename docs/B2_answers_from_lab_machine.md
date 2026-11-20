@@ -28,7 +28,7 @@ For a universal bank `d[k]` is identical for every frame `k`, so the same wavefo
 
 ## Q3 — How is it crafted?
 
-Loss: cross-entropy (untargeted ascends the true-class loss; targeted descends toward the chosen class). Per method (`exp3_attack_matrix.py`, `PGD_STEPS = 10`), same six as the matched attack:
+Loss: cross-entropy (untargeted ascends the true-class loss; targeted descends toward the chosen class). Per method (`attack_matrix.py`, `PGD_STEPS = 10`), same six as the matched attack:
 
 | method | steps | alpha | momentum | random start |
 |---|---|---|---|---|

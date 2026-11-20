@@ -32,7 +32,7 @@ each within one grid step (0.001). Flagging as instructed, with the diagnosis:
 
 - **It is NOT a normalization mismatch.** The sweep and the reachability matrix share the same
   `load_windows`, the same model, and the same L∞ `craft`/projection operator (the shortfall code
-  reuses `exp3_attack_matrix`), so the two runs are on one axis.
+  reuses `attack_matrix`), so the two runs are on one axis.
 - **It is structural / definitional.** `Delta_i = eps_50^untarg(i) − min_j R_ij` compares an
   **untargeted** onset to a **targeted** radius. "Leave your own class" (via the strong 6-attack
   union) is a strictly easier objective than reaching the nearest *specific* class, so

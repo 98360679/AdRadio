@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""exp3_validation_confusion.py — clean-classifier validation accuracy + confusion.
+"""validation_confusion.py — clean-classifier validation accuracy + confusion.
 
 Reproduces the victim classifier's baseline (pre-attack) accuracy reported in the
 paper: the held-out run-3 validation of the CVNN, under the leakage-safe split
@@ -7,8 +7,8 @@ paper: the held-out run-3 validation of the CVNN, under the leakage-safe split
 over its 13 I/Q frames (1024-sample windows); we report the frame-level accuracy
 (the classifier's actual decision) and the per-I/Q-frame (window-level) accuracy.
 
-  python3 exp3_validation_confusion.py            # defaults: trained_models/fingerprint_cvnn.pt, run 3
-  python3 exp3_validation_confusion.py --model trained_models/fingerprint_cvnn.pt \
+  python3 validation_confusion.py            # defaults: trained_models/fingerprint_cvnn.pt, run 3
+  python3 validation_confusion.py --model trained_models/fingerprint_cvnn.pt \
           --base $CAPTURES_ROOT/enrollment --run 3 --out docs/validation_confusion.csv
 
 Prints the confusion matrix and writes it (frame- and window-level) to --out.
@@ -20,10 +20,10 @@ while _R != _os.path.dirname(_R) and not _os.path.isdir(_os.path.join(_R, ".git"
 _sys.path.insert(0, _os.path.join(_R, "lib"))
 _os.chdir(_R)
 import os, csv, argparse, numpy as np, torch
-from exp3_cvnn import CVNN, iq_to_complex
-from exp3_fp_model import frame_to_windows, NUM_CLASSES, WIN, DEVICE_NAMES
-from exp3_attack_matrix import to_reim_t, predict
-from exp3_extract_frames import extract_frames_for_file
+from cvnn import CVNN, iq_to_complex
+from fp_model import frame_to_windows, NUM_CLASSES, WIN, DEVICE_NAMES
+from attack_matrix import to_reim_t, predict
+from extract_frames import extract_frames_for_file
 
 CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
 

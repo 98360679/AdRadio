@@ -47,8 +47,8 @@ import sys
 
 import numpy as np
 
-from exp3_extract_frames import extract_frames_for_file
-from exp3_fp_model import PRE_ROLL, ACTIVE, WIN
+from extract_frames import extract_frames_for_file
+from fp_model import PRE_ROLL, ACTIVE, WIN
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import exp3_ber_eval as B

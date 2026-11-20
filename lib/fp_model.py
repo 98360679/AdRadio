@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-exp3_fp_model.py — RF-fingerprint CNN + preprocessing (shared by train & attack)
+fp_model.py — RF-fingerprint CNN + preprocessing (shared by train & attack)
 ────────────────────────────────────────────────────────────────────────────────
 
 Single source of truth for:
   * how a complex IQ window becomes the model input  (frame_to_windows / iq_to_input)
   * the CNN architecture                              (FingerprintCNN)
 
-Both the trainer (exp3_train_fingerprint.py) and the attack/perturbation generator
+Both the trainer (train_fingerprint.py) and the attack/perturbation generator
 import from here, so the model is attacked under EXACTLY the preprocessing it was
 trained with — which is what makes a crafted perturbation faithful.
 

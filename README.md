@@ -19,7 +19,7 @@ experiment we ran, and the exact step-by-step commands to reproduce each result 
 
 > **Terminology (paper vs. code).** The paper calls the **1,024-sample model input** an **I/Q frame**
 > (the sliding-window input, matching our prior work — 1,024 samples here vs. 288 there). In the code and
-> this guide, that same unit is a **window** (`WIN = 1024`; see `frame_to_windows` in `exp3_fp_model.py`).
+> this guide, that same unit is a **window** (`WIN = 1024`; see `frame_to_windows` in `fp_model.py`).
 > The code/README **frame** (`FRAME_LEN = 15360`; e.g. "detected frames", `frames_decoded`,
 > `ch0_run3_<N>.bin`) is the full 802.11 transmission, which the paper does not name separately and which
 > yields **13 windows**. In short: **paper "I/Q frame" = code/README "window"**, and a code/README
@@ -87,22 +87,21 @@ AdvRadio/                               # WiSec 2027 artifact (code only)
 ├── trained_models/                     # fingerprint_{cvnn,cnn1d,freqcvnn}.pt — classifiers (gitignored; hosted externally, §3)
 │
 ├── lib/                                # shared modules (imported across every experiment)
-│   ├── exp3_fp_model.py                #   CVNN input windowing — single source of truth
-│   ├── exp3_cvnn.py  exp3_cnn1d.py  exp3_freqcvnn.py   # classifier architectures
-│   ├── exp3_attack_matrix.py           #   attack crafting (FGSM/BIM/MIM/PGD)
-│   └── exp3_extract_frames.py          #   energy-detect + window extraction
+│   ├── fp_model.py                #   CVNN input windowing — single source of truth
+│   ├── cvnn.py  cnn1d.py  freqcvnn.py   # classifier architectures
+│   ├── attack_matrix.py           #   attack crafting (FGSM/BIM/MIM/PGD)
+│   └── extract_frames.py          #   energy-detect + window extraction
 │
 ├── training/                           # enrollment, training, and validation of the victim
 │   ├── flowgraphs/                     #   GNU Radio 3.10 — OTA capture (§6.1)
-│   │   ├── lab_exp3_enroll_calib.py    #     enrollment capture driver
+│   │   ├── enroll_calib.py    #     enrollment capture driver
 │   │   ├── enroll_d{1..5}_runs.sh      #     per-device enrollment wrappers
 │   │   └── wifi_tx_updated.py  wifi_rx.py  wifi_adversary_tx.py
-│   ├── exp3_train_fingerprint.py       #   train the CVNN
-│   ├── exp3_validation_confusion.py    #   held-out val accuracy + confusion (95.98%)
-│   └── exp3_crossday_eval.py           #   cross-day per-device accuracy
+│   ├── train_fingerprint.py       #   train the CVNN
+│   └── validation_confusion.py    #   held-out val accuracy + confusion (95.98%)
 │
 ├── experiment_1/   # Type I — digital reachability (no radio)
-│   └── exp3_reachability.py  exp3_make_perturbation.py
+│   └── exp1_reachability.py  exp1_make_perturbation.py
 ├── experiment_2/   # Type II — single-channel OTA
 │   └── build_ch0_sc.py  run_sc.sh
 ├── experiment_3/   # Type III — two-channel OTA  (the shared OTA pipeline)
@@ -127,7 +126,7 @@ AdvRadio/                               # WiSec 2027 artifact (code only)
 **Running scripts from the new layout.** Every entry script self-locates the repo root (the
 directory holding `.git`), adds `lib/` to `sys.path`, and resolves `docs/` and the `.pt` models
 relative to that root — so a script runs correctly **from any working directory**
-(e.g. `python3 plots/make_b1_combined_cvnn.py` or `python3 experiment_1/exp3_reachability.py`).
+(e.g. `python3 plots/make_b1_combined_cvnn.py` or `python3 experiment_1/exp1_reachability.py`).
 The shared OTA runners (`experiment_3/campaign.sh`, `experiment_2/run_sc.sh`) reference each other
 by repo-relative path, so the Experiment 2/3 campaigns work across the folder split.
 
@@ -189,7 +188,7 @@ mkdir -p trained_models && cp /path/to/bundle/models/*.pt trained_models/
 ### 3.1 Enrollment dataset — `${CAPTURES_ROOT}/enrollment/`
 
 - **Format:** complex64 interleaved I/Q at **Fs = 5 MHz**, ~30 s per run.
-- **Classes:** 5 fingerprint classes **`device_1 … device_5`** (`NUM_CLASSES = 5` in `exp3_fp_model.py`;
+- **Classes:** 5 fingerprint classes **`device_1 … device_5`** (`NUM_CLASSES = 5` in `fp_model.py`;
   `device_5` = the adversary radio, captured as a victim class).
 - **Layout:** `${CAPTURES_ROOT}/enrollment/device_<N>/` with
   `clean_run_{1,2,3}.bin` (~1.24–1.28 GB each) plus sidecars
@@ -199,7 +198,7 @@ mkdir -p trained_models && cp /path/to/bundle/models/*.pt trained_models/
   (no window leakage). `${CAPTURES_ROOT}/validation/` holds separate BER/decode validation captures,
   and `${CAPTURES_ROOT}/train/` is the 5-class symlink tree the trainer builds (§6.2).
 - Windowing: `WIN = 1024` complex samples tiled **non-overlapping** (stride = `WIN`) over each frame's
-  payload region `[PRE_ROLL : PRE_ROLL+ACTIVE] = [500 : 13812]` in `exp3_fp_model.py` — i.e. skipping the
+  payload region `[PRE_ROLL : PRE_ROLL+ACTIVE] = [500 : 13812]` in `fp_model.py` — i.e. skipping the
   preamble and SIGNAL field (samples 100–500). Each window is the paper's **I/Q frame** (the model
   input), power-normalized to unit average power.
   - **Why each 802.11 frame gives 13 I/Q frames:** the windowed payload span is `ACTIVE = 13312`
@@ -247,8 +246,8 @@ Three checkpoints, one per architecture, all scoring `WIN=1024` complex windows 
 | fingerprint_cnn1d.pt | 490 K | CNN1D | Exp 4.1 real-CNN baseline |
 | fingerprint_freqcvnn.pt | 1.72 M | FreqCVNN | Exp 4.4 frequency-domain variant |
 
-Architectures: **CVNN** = time-domain complex CNN (`exp3_fp_model.py`), **FreqCVNN** = FFT-first
-(`exp3_freqcvnn.py`), **CNN1D** = real 1-D CNN baseline (`exp3_cnn1d.py`).
+Architectures: **CVNN** = time-domain complex CNN (`fp_model.py`), **FreqCVNN** = FFT-first
+(`freqcvnn.py`), **CNN1D** = real 1-D CNN baseline (`cnn1d.py`).
 
 ---
 
@@ -310,7 +309,7 @@ python3 plots/make_results_workbook_byexp.py   # -> docs/exp3_all_results_byexp.
 **C. Run Experiment 1 digital reachability** (needs a model in `trained_models/` + the enrollment
 windows, no radio):
 ```bash
-python3 experiment_1/exp3_reachability.py \
+python3 experiment_1/exp1_reachability.py \
   --model trained_models/fingerprint_cvnn.pt \
   --base  $CAPTURES_ROOT/enrollment \
   --out   reachability_quickstart.csv
@@ -330,17 +329,17 @@ impersonate, `<K>` the target's 1-based index.
 
 | Stage | Script | Radio | § |
 |---|---|---|---|
-| 1. Collect enrollment | `training/flowgraphs/enroll_d{1..5}_runs.sh` → `training/flowgraphs/lab_exp3_enroll_calib.py` | yes | 6.1 |
-| 2. Train model | `training/exp3_train_fingerprint.py` | no | 6.2 |
-| 3. Validate | `training/exp3_crossday_eval.py` | no | 6.3 |
+| 1. Collect enrollment | `training/flowgraphs/enroll_d{1..5}_runs.sh` → `training/flowgraphs/enroll_calib.py` | yes | 6.1 |
+| 2. Train model | `training/train_fingerprint.py` | no | 6.2 |
+| 3. Validate | `training/validation_confusion.py` | no | 6.3 |
 | 4. Build victim replay | `experiment_3/exp3_map_detected_ids.py`, `experiment_3/build_ch0_matched.py` | no | 6.4 |
 | 5. Silent-adversary gate | `experiment_3/run_2ch.py`, `experiment_3/score_2ch.py` | yes | 6.5 |
 | 6. Craft δ banks | `experiment_3/exp3_make_ota_perturbations.py` | no | 6.6 |
-| Experiment 1 Reachability | `experiment_1/exp3_reachability.py` | no | 7 |
+| Experiment 1 Reachability | `experiment_1/exp1_reachability.py` | no | 7 |
 | Experiment 2 Single-channel | `experiment_2/run_sc.sh` / `campaign.sh sc_*` | yes | 7 |
 | Experiment 3 Two-channel | `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
 
-### 6.1 Collect enrollment — `training/flowgraphs/lab_exp3_enroll_calib.py`
+### 6.1 Collect enrollment — `training/flowgraphs/enroll_calib.py`
 Bring a TX radio up once, calibrate its gain to a target RX level, capture 3 clean runs/device via the
 per-device wrappers (one radio init per run — the pattern that works).
 Produces `$CAPTURES_ROOT/enrollment/device_N/clean_run_{1,2,3}.bin` (+ sidecars).
@@ -354,7 +353,7 @@ bash enroll_d1_runs.sh    # then swap radio → enroll_d2_runs.sh → d3 → d4 
 ```
 Each run ≈ 1 GB, 100+ frames, `bad_packet=no`, within tolerance of −30 dB.
 
-### 6.2 Train — `training/exp3_train_fingerprint.py`
+### 6.2 Train — `training/train_fingerprint.py`
 **Refit every session** — a reused prior-day model fails on a re-leveled enrollment. Needs a `_5dev`
 symlink tree (`device_N → device_(N+1)`, **clean_run only**). Produces `fingerprint_<tag>.pt`.
 Args: `--root`, `--val-run` (3), `--epochs` (use **80**),
@@ -364,14 +363,14 @@ ENR=$CAPTURES_ROOT/enrollment
 TRN=$CAPTURES_ROOT/train; rm -rf "$TRN"
 for n in 1 2 3 4 5; do mkdir -p "$TRN/device_$n"
   for r in 1 2 3; do ln -s "$ENR/device_$((n+1))/clean_run_$r.bin" "$TRN/device_$n/clean_run_$r.bin"; done; done
-python3 training/exp3_train_fingerprint.py --val-run 3 --epochs 80 --root "$TRN" --tag cvnn
+python3 training/train_fingerprint.py --val-run 3 --epochs 80 --root "$TRN" --tag cvnn
 #   -> trained_models/fingerprint_cvnn.pt
 ```
 
-### 6.3 Validate — `training/exp3_crossday_eval.py`
-Per-device accuracy + confusion. Want **victim = 100%** and the target class strong.
+### 6.3 Validate — `training/validation_confusion.py`
+Held-out run-3 per-device accuracy + confusion (leakage-safe). Want **victim = 100%** and the target class strong; overall frame-level **95.98%**.
 ```bash
-python3 training/exp3_crossday_eval.py --model trained_models/fingerprint_cvnn.pt --test "$ENR"
+python3 training/validation_confusion.py --model trained_models/fingerprint_cvnn.pt --base "$ENR"
 ```
 
 ### 6.4 Build the victim replay `ch0`
@@ -432,7 +431,7 @@ experiment is `docs/exp3_all_results_byexp.xlsx`.
 
 ### Experiment 1 (Type I) — Digital reachability (no radio)
 ```bash
-python3 experiment_1/exp3_reachability.py --model trained_models/fingerprint_cvnn.pt --base "$ENR" --out reachability.csv
+python3 experiment_1/exp1_reachability.py --model trained_models/fingerprint_cvnn.pt --base "$ENR" --out reachability.csv
 ```
 Data: `reachability_matrix.csv`, `reachability_shortfall_curves.{npz,csv}`,
 `exp3_eps_phys_empirical.{csv,npz}`, `reachability_cvnn.csv`. Figures: `plots/make_e1_diagram.py`,
@@ -468,7 +467,7 @@ frame rejections) are rendered from embedded data by `plots/plot_exp3_sidebyside
 ### Experiment 4 — Robustness against authentication-model variations
 Does the fragility depend on the classifier? Four variations (Exp 4.4 is a table). Crafting as in §6.
 
-- **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real CNN1D baseline (`lib/exp3_cnn1d.py`), run its
+- **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real CNN1D baseline (`lib/cnn1d.py`), run its
   reachability, compare to CVNN. Data: `reachability_matrix_cnn1d.csv`, `docs/a1_*_ota_ber.csv`,
   `docs/a1cvnn_*_ota_ber.csv`. Figures: `plots/make_a1_compare.py` → `docs/a1_cnn1d_vs_cvnn.*`,
   `plots/make_cnn1d_fooling_plot.py`.
@@ -479,7 +478,7 @@ Does the fragility depend on the classifier? Four variations (Exp 4.4 is a table
 - **Exp 4.3 — explicit physical features (SVM/RF).** Feature-explicit classifier on explicit impairment features.
   `experiment_4/exp3_a3_feature_model.py`. Data: `exp3_a3_feature_model.{csv,npz}`. Figure:
   `plots/make_a3_plot.py` → `docs/a3_feature_model_robustness.*`.
-- **Exp 4.4 — spectral representation (frequency-domain CVNN).** FFT-first classifier (`lib/exp3_freqcvnn.py`); representation-invariance
+- **Exp 4.4 — spectral representation (frequency-domain CVNN).** FFT-first classifier (`lib/freqcvnn.py`); representation-invariance
   of the fragility, **reported as a table** (no figure). Data: `reachability_matrix_freqcvnn.csv`.
 
 ### Experiment 5 — Adversary realism variations
@@ -547,7 +546,7 @@ results against that classifier.
 (`trained_models/fingerprint_cvnn.pt`) has its own pre-attack accuracy, reproducible here from the
 enrollment bundle:
 ```bash
-python3 training/exp3_validation_confusion.py   # held-out run-3 validation, frame-level majority vote
+python3 training/validation_confusion.py   # held-out run-3 validation, frame-level majority vote
 ```
 **95.98% frame-level** (92.34% per I/Q frame), over 523 frames — four devices at 98–100%, `device_2` the
 only material confusion (82.1%). Full confusion matrix in `docs/validation_confusion.{md,csv}`. This is

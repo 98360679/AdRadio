@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-exp3_train_fingerprint.py — train the RF-fingerprint CNN from scratch
+train_fingerprint.py — train the RF-fingerprint CNN from scratch
 ────────────────────────────────────────────────────────────────────────────
 
-Trains FingerprintCNN (exp3_fp_model.py) on the captured frames in
+Trains FingerprintCNN (fp_model.py) on the captured frames in
   /media/.../session13/processed/frames/frames_dev{1..5}.npz
 which are the validated segmentation of the raw session13/train captures
 (frame_len=15360, pre_roll=256, fs=5 MHz; device/class count comes from
-exp3_fp_model.NUM_CLASSES).
+fp_model.NUM_CLASSES).
 
 Split: runs 1+2 = train, run 3 = held-out validation (frame-level, no window
 leakage). Reports window accuracy and frame accuracy (majority vote over a
 frame's windows). Saves the trained model + config to the DRIVE.
 
 Run:
-  .venv/bin/python exp3_train_fingerprint.py --epochs 25
+  .venv/bin/python train_fingerprint.py --epochs 25
 """
 import os as _os, sys as _sys
 _R = _os.path.abspath(_os.path.dirname(__file__))
@@ -34,7 +34,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 
-from exp3_fp_model import (FingerprintCNN, frame_to_windows, iq_to_input,
+from fp_model import (FingerprintCNN, frame_to_windows, iq_to_input,
                            n_params, NUM_CLASSES, DEVICE_NAMES, WIN, FS)
 
 DRIVE_PROC = os.environ.get(

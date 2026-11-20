@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""exp3_reachability.py — reachable-set check for the 8/08 model.
+"""exp1_reachability.py — reachable-set check for the 8/08 model.
 
 Not just "did the targeted attack hit its target" (that is target_pct in the attack
 matrix) but WHERE the victim actually LANDS. For each (attack, epsilon) we record the
@@ -19,12 +19,12 @@ while _R != _os.path.dirname(_R) and not _os.path.isdir(_os.path.join(_R, ".git"
 _sys.path.insert(0, _os.path.join(_R, "lib"))
 _os.chdir(_R)
 import numpy as np, torch, csv, time
-from exp3_attack_matrix import (load_windows, craft, predict, to_reim_t,
+from attack_matrix import (load_windows, craft, predict, to_reim_t,
                                 ATTACKS, ber_proxy, recon)
 EPSILONS = [0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.10,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
 ATTACKS = {k: v for k, v in ATTACKS.items() if k in ('fgsm', 'bim', 'mim') or k.startswith('pgd')}
-from exp3_cvnn import CVNN
-from exp3_fp_model import NUM_CLASSES, DEVICE_NAMES
+from cvnn import CVNN
+from fp_model import NUM_CLASSES, DEVICE_NAMES
 import os
 CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
 

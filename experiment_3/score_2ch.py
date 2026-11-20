@@ -18,9 +18,9 @@ _os.chdir(_R)
 import argparse
 import json
 import re, csv, os, numpy as np, torch
-from exp3_extract_frames import extract_frames_for_file
-from exp3_fp_model import PRE_ROLL, ACTIVE, WIN, NUM_CLASSES, DEVICE_NAMES
-from exp3_cvnn import CVNN, iq_to_complex, to_reim
+from extract_frames import extract_frames_for_file
+from fp_model import PRE_ROLL, ACTIVE, WIN, NUM_CLASSES, DEVICE_NAMES
+from cvnn import CVNN, iq_to_complex, to_reim
 
 STARTS = list(range(PRE_ROLL, PRE_ROLL + ACTIVE - WIN + 1, WIN))
 
@@ -80,8 +80,8 @@ def main():
     tgt_i = DEVICE_NAMES.index(a.target); vic_i = DEVICE_NAMES.index(a.victim)
 
     dev = 'cuda' if torch.cuda.is_available() else 'cpu'
-    from exp3_cnn1d import CNN1DFp
-    from exp3_freqcvnn import FreqCVNN
+    from cnn1d import CNN1DFp
+    from freqcvnn import FreqCVNN
     ARCH = {'cvnn': CVNN, 'cnn1d': CNN1DFp, 'freqcvnn': FreqCVNN}
     m = ARCH[a.arch](NUM_CLASSES).to(dev)
     m.load_state_dict(torch.load(a.model, map_location=dev, weights_only=False)); m.eval()

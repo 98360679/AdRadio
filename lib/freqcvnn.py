@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""exp3_freqcvnn.py -- frequency-domain complex CNN fingerprint classifier (variation A4).
+"""freqcvnn.py -- frequency-domain complex CNN fingerprint classifier (variation A4).
 
 Same complex-valued CNN as the time-domain model, but it classifies the WINDOW'S SPECTRUM: the
 first layer is an FFT. forward(re, im) still takes the time-domain (re, im) window, computes
@@ -15,8 +15,8 @@ before the FFT, same 80-epoch AdamW/cosine schedule, run 3 held out).
 import argparse
 import numpy as np, torch, torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
-from exp3_fp_model import NUM_CLASSES
-from exp3_cvnn import CVNN, build, drift_augment, per_device_eval, n_params
+from fp_model import NUM_CLASSES
+from cvnn import CVNN, build, drift_augment, per_device_eval, n_params
 
 
 class FreqCVNN(nn.Module):

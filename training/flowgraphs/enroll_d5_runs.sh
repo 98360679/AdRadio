@@ -6,11 +6,11 @@
 # run is slower but is the pattern that has always worked.
 set -u
 CAPTURES="${CAPTURES_ROOT:-$HOME/captures}"
-cd "$(dirname "$0")"          # flowgraphs/ (lab_exp3_enroll_calib.py lives here)
+cd "$(dirname "$0")"          # flowgraphs/ (enroll_calib.py lives here)
 LOG="$PWD/logs"; mkdir -p "$LOG"      # local run logs
 for R in 1 2 3; do
   echo "########## device_5 run $R ##########"
-  python3 -u lab_exp3_enroll_calib.py --device-id 5 --run-id $R \
+  python3 -u enroll_calib.py --device-id 5 --run-id $R \
       --tx-serial 192.168.10.3 --tx-antenna "J1" --fix-gain 0.3689 --g0 0.3689 --probe-secs 8 \
       --tree enrollment > $LOG/enroll_d5_r$R.log 2>&1
   grep -E "^RESULT" $LOG/enroll_d5_r$R.log || echo "  (no RESULT line — run $R failed)"

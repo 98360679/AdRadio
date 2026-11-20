@@ -28,10 +28,10 @@ _sys.path.insert(0, _os.path.join(_R, "lib"))
 _os.chdir(_R)
 import argparse, csv
 import numpy as np, torch
-from exp3_cvnn import CVNN
-from exp3_cnn1d import CNN1DFp
-from exp3_fp_model import NUM_CLASSES
-from exp3_attack_matrix import load_windows, to_reim_t, craft, predict, ATTACKS
+from cvnn import CVNN
+from cnn1d import CNN1DFp
+from fp_model import NUM_CLASSES
+from attack_matrix import load_windows, to_reim_t, craft, predict, ATTACKS
 import os
 CAPTURES = os.environ.get('CAPTURES_ROOT', os.path.expanduser('~/captures'))
 

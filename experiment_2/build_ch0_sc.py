@@ -13,7 +13,7 @@ while _R != _os.path.dirname(_R) and not _os.path.isdir(_os.path.join(_R, ".git"
 _sys.path.insert(0, _os.path.join(_R, "lib"))
 _os.chdir(_R)
 import argparse, csv, os, numpy as np
-from exp3_fp_model import PRE_ROLL, ACTIVE
+from fp_model import PRE_ROLL, ACTIVE
 
 FRAME_PERIOD = 65661   # overridden by --frame-period
 
