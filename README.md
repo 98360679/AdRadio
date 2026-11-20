@@ -228,7 +228,7 @@ impersonate, `<K>` the target's 1-based index.
 | 6. Craft δ banks | `experiment_3/exp3_make_ota_perturbations.py` | no | 6.6 |
 | Experiment 1: Type I Baseline | `experiment_1/exp1_reachability.py` | no | 7 |
 | Experiment 2: Type II Adversary | `experiment_2/run_sc.sh` / `campaign.sh sc_*` | yes | 7 |
-| Experiment 3: Type III ADversary | `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
+| Experiment 3: Type III Adversary | `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
 
 ### 4.1 Collect enrollment — `training/flowgraphs/enroll_calib.py`
 Bring a TX radio up once, calibrate its gain to a target RX level, capture 3 clean runs/device via the
