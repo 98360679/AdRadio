@@ -509,9 +509,9 @@ Three checkpoints, one per architecture, all scoring `WIN=1024` complex windows 
 
 | Model | Size | Arch | Role |
 |---|---|---|---|
-| **fingerprint_cvnn.pt** | 1.72 M | CVNN | main classifier (Experiments 1–3, and the Experiment 5 sweeps) |
-| fingerprint_cnn1d.pt | 490 K | CNN1D | Exp 4.1 real-CNN baseline |
-| fingerprint_freqcvnn.pt | 1.72 M | FreqCVNN | Exp 4.4 frequency-domain variant |
+| **fingerprint_cvnn.pt** | 1.72&nbsp;M | CVNN | main classifier (Experiments 1–3, and the Experiment 5 sweeps) |
+| fingerprint_cnn1d.pt | 490&nbsp;K | CNN1D | Exp 4.1 real-CNN baseline |
+| fingerprint_freqcvnn.pt | 1.72&nbsp;M | FreqCVNN | Exp 4.4 frequency-domain variant |
 
 Architectures: **CVNN** = time-domain complex CNN (`fp_model.py`), **FreqCVNN** = FFT-first
 (`freqcvnn.py`), **CNN1D** = real 1-D CNN baseline (`cnn1d.py`).
