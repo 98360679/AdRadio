@@ -100,7 +100,7 @@ cd ../../gr-ieee802-11 && mkdir build && cd build && cmake .. && make && sudo ma
 (`gr-foo` first.) Python modules `gnuradio`, `ieee802_11`, `pmt` come from this system install, not pip.
 The `flowgraphs/` scripts import `ieee802_11`.
 
-### Hardware testbed (Experiments 2–3)
+### Our hardware testbed (Experiments 2–3)
 
 - **Victim** — USRP2/N-series `192.168.10.3`, antenna **J1**, TX gain **0.3689**, enrolled as the
   victim class (`device_5` in this testbed).
@@ -131,7 +131,7 @@ All radios run through **UHD + GNU Radio 3.10** (USRP family). Match these setti
 | center frequency | **5.29 GHz** |
 | sample rate | **5 MS/s** |
 | modulation | 802.11a/g **BPSK, rate 1/2** |
-| RX gain | **fixed** (we used 0.93), identical for enrollment and attack |
+| RX gain | **fixed** (we used 0.93. Your coould be different), identical for enrollment and attack |
 | TX gain | **calibrated per device** to a common target RX level (via `enroll_calib.py`) |
 
 Then follow **§4 end-to-end**: enroll (clean runs per device), then train (§4.2), validate (§4.3), build
