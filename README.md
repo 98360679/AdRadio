@@ -470,7 +470,7 @@ Each experiment below lists its one-line goal, how to reproduce it, the result d
 produces. Shared setup (model + enrollment + δ banks) comes from §6. The master data index for every
 experiment is `docs/exp3_all_results_byexp.xlsx`.
 
-### Experiment 1 (Type I) — Classifier reachability (no radio)
+### Experiment 1 (Type I Baseline) — Classifier reachability (no radio)
 ```bash
 python3 experiment_1/exp1_reachability.py --model trained_models/fingerprint_cvnn.pt --base "$ENR" --out reachability.csv
 ```
