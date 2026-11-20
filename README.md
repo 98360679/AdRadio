@@ -127,7 +127,7 @@ recompute from scratch.
 
 ### Minimal bundle (Tier 2) — OneDrive
 
-> **Download:** `<anonymized-dataset-url>` (link withheld for double-blind review)  *(also cited in the paper)*
+> **Download:** https://uofnebraska-my.sharepoint.com/personal/98360679_nebraska_edu/Documents/Forms/All.aspx  (link withheld for double-blind review)  *(also cited in the paper)*
 >
 > After downloading, set `CAPTURES_ROOT` to the bundle root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
 
