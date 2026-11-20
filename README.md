@@ -224,11 +224,11 @@ impersonate, `<K>` the target's 1-based index.
 | 2. Train model | `training/train_fingerprint.py` | no | 6.2 |
 | 3. Validate | `training/validation_confusion.py` | no | 6.3 |
 | 4. Build victim replay | `experiment_3/exp3_map_detected_ids.py`, `experiment_3/build_ch0_matched.py` | no | 6.4 |
-| 5. Silent-adversary gate | `experiment_3/run_2ch.py`, `experiment_3/score_2ch.py` | yes | 6.5 |
+| 5. Silent-adversary&nbsp;gate | `experiment_3/run_2ch.py`, `experiment_3/score_2ch.py` | yes | 6.5 |
 | 6. Craft δ banks | `experiment_3/exp3_make_ota_perturbations.py` | no | 6.6 |
-| Experiment 1: Type I Baseline | `experiment_1/exp1_reachability.py` | no | 7 |
-| Experiment 2: Type II Adversary | `experiment_2/run_sc.sh` / `campaign.sh sc_*` | yes | 7 |
-| Experiment 3: Type III Adversary | `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
+| Experiment&nbsp;1:&nbsp;Type&nbsp;I&nbsp;Baseline&nbsp;| `experiment_1/exp1_reachability.py` | no | 7 |
+| Experiment&nbsp;2:&nbsp;Type&nbsp;II&nbsp;Adversary&nbsp;| `experiment_2/run_sc.sh` / `campaign.sh sc_*` | yes | 7 |
+| Experiment&nbsp;3:&nbsp;Type&nbsp;III&nbsp;Adversary&nbsp;| `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
 
 ### 4.1 Collect enrollment — `training/flowgraphs/enroll_calib.py`
 Bring a TX radio up once, calibrate its gain to a target RX level, capture 3 clean runs/device via the
@@ -423,8 +423,8 @@ Reproduction has tiers; **most reviewers need nothing beyond this repo.**
 | Tier | Reproduces | Data to download | Size |
 |---|---|---|---|
 | **1 Results** | every figure, table, and the workbook | **nothing** — the shipped `docs/*.csv` in this repo (verified: the `plots/` scripts regenerate) | **0** |
-| **2 Recompute** | Experiment 1 reachability, Experiment 4, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19 GB** |
-| **3 Re-score raw OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs | ~90 GB |
+| **2 Recompute** | Experiment 1 reachability, Experiment 4, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19&nbsp;GB** |
+| **3 Re-score&nbsp;raw&nbsp; OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs | ~90&nbsp;GB |
 | **4 Re-run OTA** | the whole pipeline | everything **+ the radios (§2)** | — |
 
 So: **clone the repo and run the scripts to reproduce every reported result.** Download data only to
