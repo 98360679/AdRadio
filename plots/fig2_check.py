@@ -1,6 +1,13 @@
+import os as _os
+_R = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))  # repo root (parent of plots/)
+OUT = _os.environ.get("FIG_OUT", _os.path.join(_R, "plots", "output"))
+_os.makedirs(OUT, exist_ok=True)
+import matplotlib.cbook as _cb, pandas as _pd
+_c1d = _cb._check_1d
+_cb._check_1d = lambda x: _c1d(x.to_numpy() if isinstance(x, (_pd.Series, _pd.Index)) else x)
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
-SRC = '/mnt/user-data/uploads/exp3_all_results_byexp.xlsx'
+SRC = _os.path.join(_R, 'docs', 'exp3_all_results_byexp.xlsx')
 raw = pd.ExcelFile(SRC).parse('A2-transfer-raw', header=None)
 
 def block(hdr, n, cols):
@@ -60,5 +67,5 @@ axL.set_ylabel('fooling rate')
 for a, tag in ((axL, '(a)'), (axR, '(b)')):
     a.text(0.5, -0.26, tag, transform=a.transAxes, ha='center', fontsize=8)
 fig.tight_layout()
-fig.savefig('/mnt/user-data/outputs/varA2_transfer_digital.png', dpi=300)
-fig.savefig('/mnt/user-data/outputs/varA2_transfer_digital.pdf')
+fig.savefig(f'{OUT}/varA2_transfer_digital.png', dpi=300)
+fig.savefig(f'{OUT}/varA2_transfer_digital.pdf')

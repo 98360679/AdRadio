@@ -1,6 +1,13 @@
+import os as _os
+_R = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))  # repo root (parent of plots/)
+OUT = _os.environ.get("FIG_OUT", _os.path.join(_R, "plots", "output"))
+_os.makedirs(OUT, exist_ok=True)
+import matplotlib.cbook as _cb, pandas as _pd
+_c1d = _cb._check_1d
+_cb._check_1d = lambda x: _c1d(x.to_numpy() if isinstance(x, (_pd.Series, _pd.Index)) else x)
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
-SRC = '/mnt/user-data/uploads/exp3_all_results_byexp.xlsx'
+SRC = _os.path.join(_R, 'docs', 'exp3_all_results_byexp.xlsx')
 raw = pd.ExcelFile(SRC).parse('A1-ML', header=None)
 
 def block(start):
@@ -59,6 +66,6 @@ fig.legend(h, l, loc='lower center', ncol=3, frameon=False,
            bbox_to_anchor=(0.5, -0.015), handlelength=2.2,
            columnspacing=1.2, handletextpad=0.5)
 fig.tight_layout(rect=[0, 0.105, 1, 1])
-fig.savefig('/mnt/user-data/outputs/varA1_cnn1d_vs_cvnn_col.png', dpi=300)
-fig.savefig('/mnt/user-data/outputs/varA1_cnn1d_vs_cvnn_col.pdf')
+fig.savefig(f'{OUT}/varA1_cnn1d_vs_cvnn_col.png', dpi=300)
+fig.savefig(f'{OUT}/varA1_cnn1d_vs_cvnn_col.pdf')
 

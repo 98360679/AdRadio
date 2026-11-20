@@ -1,6 +1,13 @@
+import os as _os
+_R = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))  # repo root (parent of plots/)
+OUT = _os.environ.get("FIG_OUT", _os.path.join(_R, "plots", "output"))
+_os.makedirs(OUT, exist_ok=True)
+import matplotlib.cbook as _cb, pandas as _pd
+_c1d = _cb._check_1d
+_cb._check_1d = lambda x: _c1d(x.to_numpy() if isinstance(x, (_pd.Series, _pd.Index)) else x)
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
-SRC = '/mnt/user-data/uploads/exp3_all_results_byexp.xlsx'
+SRC = _os.path.join(_R, 'docs', 'exp3_all_results_byexp.xlsx')
 raw = pd.ExcelFile(SRC).parse('B2-W', header=None)
 df = raw.iloc[4:388, :8].copy()
 df.columns = ['method','mode','arm','eps','pct','landed','dec','ber']
@@ -52,8 +59,8 @@ fig.legend(h, l, loc='lower center', bbox_to_anchor=(0.5, 0.005), ncol=4,
            frameon=True, framealpha=1.0, edgecolor='0.6', fancybox=False,
            handlelength=1.8, columnspacing=1.6, handletextpad=0.5,
            borderpad=0.5)
-fig.savefig('/mnt/user-data/outputs/varB2_matched_vs_universal.png', dpi=300)
-fig.savefig('/mnt/user-data/outputs/varB2_matched_vs_universal.pdf')
+fig.savefig(f'{OUT}/varB2_matched_vs_universal.png', dpi=300)
+fig.savefig(f'{OUT}/varB2_matched_vs_universal.pdf')
 
 def eps50(g):
     e, y = g.eps.values, g.pct.values

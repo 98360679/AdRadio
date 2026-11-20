@@ -5,7 +5,7 @@
 # NOTE: GNU Radio and its OOT modules (gnuradio, ieee802_11, pmt) are NOT
 # pip-installable here — they come from a system GNU Radio 3.10 install plus the
 # gr-foo / gr-ieee802-11 modules built per the README's Installation section.
-# These are only needed for the capture scripts (exp3_wifi_rx.py).
+# These are only needed for the capture scripts (wifi_rx.py).
 #
 # For GPU training, install the CUDA build of torch from https://pytorch.org/.
 

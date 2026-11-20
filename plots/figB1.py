@@ -1,6 +1,13 @@
+import os as _os
+_R = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))  # repo root (parent of plots/)
+OUT = _os.environ.get("FIG_OUT", _os.path.join(_R, "plots", "output"))
+_os.makedirs(OUT, exist_ok=True)
+import matplotlib.cbook as _cb, pandas as _pd
+_c1d = _cb._check_1d
+_cb._check_1d = lambda x: _c1d(x.to_numpy() if isinstance(x, (_pd.Series, _pd.Index)) else x)
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
-SRC = '/mnt/user-data/uploads/exp3_all_results_byexp.xlsx'
+SRC = _os.path.join(_R, 'docs', 'exp3_all_results_byexp.xlsx')
 raw = pd.ExcelFile(SRC).parse([s for s in pd.ExcelFile(SRC).sheet_names if s.strip()=='B1-W'][0], header=None)
 COLS = ['method','gain','psr','pct_mean','pct_max','ber','dec','phases']
 
@@ -61,8 +68,8 @@ ax[0, 0].legend(loc='lower right', ncol=2, framealpha=0.95,
                 handlelength=1.8, labelspacing=0.25, columnspacing=1.0,
                 borderpad=0.3, handletextpad=0.4)
 fig.tight_layout()
-fig.savefig('/mnt/user-data/outputs/varB1_power_sweep.png', dpi=300)
-fig.savefig('/mnt/user-data/outputs/varB1_power_sweep.pdf')
+fig.savefig(f'{OUT}/varB1_power_sweep.png', dpi=300)
+fig.savefig(f'{OUT}/varB1_power_sweep.pdf')
 
 for name, df in [('untargeted', unt), ('targeted', targ)]:
     print(f'--- {name}')

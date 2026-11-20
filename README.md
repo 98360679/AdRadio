@@ -249,9 +249,8 @@ AdRadio/                                # WiSec 2027 artifact (code only)
 │
 ├── plots/          # ALL figure/graph generators (self-locating; run from anywhere)
 │   ├── plot_exp{1,2,3}_*.py  plot_tables.py          # Exp 1/2/3 paper figures + result tables
-│   ├── make_a1_compare.py  make_cnn1d_fooling_plot.py  make_transfer_plot.py
-│   │   make_ota_multimodel_plot.py  make_a3_plot.py  # Exp 4 (A1–A4)
-│   ├── make_b1_combined_cvnn.py  make_pwr_fool_ber.py  make_b2_matched_vs_unmatched.py  # Exp 5 (B1, B2)
+│   ├── fig1_col.py  fig2_check.py  fig3_check.py  make_a3_plot.py  # Exp 4 (4.1, 4.2, 4.3)
+│   ├── figB1.py  figB2.py  # Exp 5 (5.1, 5.2)
 │   └── make_results_workbook_byexp.py               # -> docs/…xlsx master index
 │
 └── docs/           # all result CSVs, rendered figures, workbooks, and write-ups
@@ -260,7 +259,7 @@ AdRadio/                                # WiSec 2027 artifact (code only)
 **Running scripts from the new layout.** Every entry script self-locates the repo root (the
 directory holding `.git`), adds `lib/` to `sys.path`, and resolves `docs/` and the `.pt` models
 relative to that root — so a script runs correctly **from any working directory**
-(e.g. `python3 plots/make_b1_combined_cvnn.py` or `python3 experiment_1/exp1_reachability.py`).
+(e.g. `python3 plots/figB1.py` or `python3 experiment_1/exp1_reachability.py`).
 The shared OTA runners (`experiment_3/campaign.sh`, `experiment_2/run_sc.sh`) reference each other
 by repo-relative path, so the Experiment 2/3 campaigns work across the folder split.
 
@@ -498,11 +497,10 @@ Does the fragility depend on the classifier? Four variations (Exp 4.4 is a table
 
 - **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real CNN1D baseline (`lib/cnn1d.py`), run its
   reachability, compare to CVNN. Data: `reachability_matrix_cnn1d.csv`, `docs/a1_*_ota_ber.csv`,
-  `docs/a1cvnn_*_ota_ber.csv`. Figures: `plots/make_a1_compare.py` produces `docs/a1_cnn1d_vs_cvnn.*`,
-  `plots/make_cnn1d_fooling_plot.py`.
+  `docs/a1cvnn_*_ota_ber.csv` (aggregated into the workbook). Figure: `plots/fig1_col.py` produces `varA1_cnn1d_vs_cvnn_col.*`.
 - **Exp 4.2 — transfer across models.** δ crafted on CVNN applied to CNN1D and the physics SVM/RF.
   `experiment_4/exp3_transfer_cnn1d_cvnn.py`. Data: `exp3_transfer_cnn1d_cvnn.{csv,npz}`,
-  `exp3_ota_multimodel.csv`. Figures: `plots/make_transfer_plot.py`, `plots/make_ota_multimodel_plot.py`.
+  `exp3_ota_multimodel.csv`. Figures: `plots/fig2_check.py` (varA2 digital), `plots/fig3_check.py` (varA2 OTA).
   (Workbook sheets `A2-ML`, `A2-transfer-raw`.)
 - **Exp 4.3 — explicit physical features (SVM/RF).** Feature-explicit classifier on explicit impairment features.
   `experiment_4/exp3_a3_feature_model.py`. Data: `exp3_a3_feature_model.{csv,npz}`. Figure:
@@ -516,10 +514,10 @@ Both run through the Experiment 3 two-channel pipeline (§6); no dedicated scrip
 - **Exp 5.1 — perturbation power.** Two-channel fooling, target rate, and BER vs adversary gain and
   measured received PSR (ε=0.01); distance-ratio reach. Runs on `$CAPTURES_ROOT/attack_b1`. Data:
   `docs/b1_cvnn_foolber_<method>.csv` (untargeted), `docs/b1_cvnn_tgt_d3_foolber_<method>.csv`
-  (targeted device_3). Figures: `plots/make_b1_combined_cvnn.py`, `plots/make_pwr_fool_ber.py`.
+  (targeted device_3). Figure: `plots/figB1.py` (varB1 power sweep).
 - **Exp 5.2 — one perturbation for every frame.** Per-frame matched δ vs one universal waveform reused on every frame
   (the realizable adversary). Data: `docs/b2_matched_vs_unmatched.csv`. Figure:
-  `plots/make_b2_matched_vs_unmatched.py` produces `docs/b2_matched_vs_unmatched.*`.
+  `plots/figB2.py` produces `varB2_matched_vs_universal.*`.
 
 ---
 
@@ -540,21 +538,19 @@ A2-transfer-raw, A3-ML, A4-ML, B1-W, B2-W).
 `plots/plot_exp3_targeted.py` (Exp 3) · `plots/plot_tables.py` (result tables). Supporting:
 `plots/make_e1_diagram.py`, `plots/make_digital_vs_ota.py`, `plots/make_sc_vs_2ch_plot.py`.
 
-**Experiment 4 (Exp 4.1–4.4):** `plots/make_a1_compare.py`, `plots/make_cnn1d_fooling_plot.py` (Exp 4.1) ·
-`plots/make_transfer_plot.py`, `plots/make_ota_multimodel_plot.py` (Exp 4.2) · `plots/make_a3_plot.py` (Exp 4.3).
+**Experiment 4 (Exp 4.1–4.4):** `plots/fig1_col.py` (Exp 4.1) · `plots/fig2_check.py`, `plots/fig3_check.py` (Exp 4.2) · `plots/make_a3_plot.py` (Exp 4.3).
 Exp 4.4 is reported as a table.
 
-**Experiment 5 (Exp 5.1, 5.2):** `plots/make_b1_combined_cvnn.py`, `plots/make_pwr_fool_ber.py` (Exp 5.1) ·
-`plots/make_b2_matched_vs_unmatched.py` (Exp 5.2).
+**Experiment 5 (Exp 5.1, 5.2):** `plots/figB1.py` (Exp 5.1) · `plots/figB2.py` (Exp 5.2).
 
 Regenerate everything:
 ```bash
-for f in plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp2_sidebyside \
+for f in make_results_workbook_byexp \
+         plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp2_sidebyside \
          plot_exp3_sidebyside plot_exp3_rejection plot_tables \
          make_e1_diagram make_digital_vs_ota make_sc_vs_2ch_plot \
-         make_a1_compare make_cnn1d_fooling_plot make_transfer_plot make_ota_multimodel_plot make_a3_plot \
-         make_b1_combined_cvnn make_pwr_fool_ber make_b2_matched_vs_unmatched \
-         make_results_workbook_byexp; do
+         fig1_col fig2_check fig3_check make_a3_plot \
+         figB1 figB2; do
   echo "== $f =="; python3 "plots/$f.py" || echo "  (check inputs for $f)"
 done
 ```
