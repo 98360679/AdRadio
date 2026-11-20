@@ -17,6 +17,13 @@ experiment we ran, and the exact step-by-step commands to reproduce each result 
 > and the trained models are hosted externally and are needed only to recompute from scratch — see the
 > reproduction tiers in §3.
 
+> ### 🛈 No SDR hardware? You can still reproduce almost everything.
+> **Tiers 1–3 need no radios.** The over-the-air signals are already *recorded* and shipped, so:
+> - **Tier 1** — regenerate **every figure and table** from the shipped `docs/*.csv` (Python only, nothing to download).
+> - **Tiers 2–3** — recompute reachability / model-variation / validation and re-score the OTA fool%/BER by running the classifier on the shipped `.bin` recordings.
+>
+> Only **Tier 4** (collecting *new* transmissions) needs the testbed (§4). Models ship **pre-trained**, and every script runs on **CPU** (GPU optional). See §3 for the tier table.
+
 > **Terminology (paper vs. code).** The paper calls the **1,024-sample model input** an **I/Q frame**
 > (the sliding-window input, matching our prior work — 1,024 samples here vs. 288 there). In the code and
 > this guide, that same unit is a **window** (`WIN = 1024`; see `frame_to_windows` in `fp_model.py`).
@@ -281,7 +288,41 @@ The `flowgraphs/` scripts import `ieee802_11`.
 - **Other enrolled devices** — B200mini/B205mini (`device_1 3263606`, `device_2 32593C4`,
   `device_3 3259376`, `device_4 3259368`), swapped one at a time into TX/RX; these are the
   classifier's other legitimate classes = the impersonation *targets*, not attackers.
-- **Receiver** — b205mini, **`rx_gain = 0.93` everywhere** (gotcha #1).
+- **Receiver** — b205mini, **`rx_gain = 0.93` everywhere** — a mismatch makes the *unperturbed* victim misclassify and turns every fool% into a baseline artifact; the §6.5 gate catches it.
+
+### Re-running from scratch on your own hardware (Tier 4)
+
+You do **not** need our exact radios — the serials/IPs above are only what we used. To repeat the full
+pipeline on a different SDR testbed you need, by **role**:
+
+- **≥ 5 distinct transmitters** — one is the **victim**, the other four are the enrolled impersonation
+  **targets** (any SDRs with stable, distinguishable hardware impairments; we used N-series + B20x-mini
+  USRPs). They go through the TX chain one at a time during enrollment.
+- **One adversary transmitter** (for two-channel Experiment 3) that is **clock/PPS-locked to the
+  victim** — a shared 10 MHz reference + PPS so the two streams are phase-coherent (we MIMO-cabled two
+  N-series; any UHD radios that can share a reference work).
+- **One receiver.**
+
+All radios run through **UHD + GNU Radio 3.10** (USRP family). Match these settings so results are comparable:
+
+| setting | value |
+|---|---|
+| center frequency | **5.29 GHz** |
+| sample rate | **5 MS/s** |
+| modulation | 802.11a/g **BPSK, rate 1/2** |
+| RX gain | **fixed** (we used 0.93), identical for enrollment and attack |
+| TX gain | **calibrated per device** to a common target RX level (via `enroll_calib.py`) |
+
+Then follow **§6 end-to-end**: enroll (clean runs per device), then train (§6.2), validate (§6.3), build
+the victim replay (§6.4), pass the silent-adversary gate (§6.5), craft the δ banks (§6.6), and run the OTA
+campaigns (§7, `run_sc.sh` / `run_2ch.sh`).
+
+> **Expect different absolute numbers.** A device fingerprint is specific to the *physical radios*, so
+> your classifier, its clean accuracy, and the exact PSR / fool% crossings **will differ** from ours —
+> you train a new model on *your* hardware, not load ours. What reproduces is the **qualitative result**:
+> a low-power adversary fools the OTA classifier while the 802.11 link still decodes. The most common
+> pitfall is an **uncalibrated gain** that makes the *clean* victim misclassify — the §6.5 gate catches
+> it in ~60 s.
 
 ---
 
