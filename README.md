@@ -44,8 +44,6 @@ experiment we ran, and the exact step-by-step commands to reproduce each result 
 8. [Regenerating every figure, table, and workbook](#8-regenerating-every-figure-table-and-workbook)
 9. [The baseline classifier](#9-the-baseline-classifier)
 10. [Reading results](#10-reading-results)
-11. [Gotchas](#11-gotchas)
-12. [Caveats, superseded artifacts, citation](#12-caveats-superseded-artifacts-citation)
 
 ---
 
@@ -55,13 +53,13 @@ experiment we ran, and the exact step-by-step commands to reproduce each result 
 physical realism); Experiments 4–5 vary *what* classifier is attacked and *how realistic* the adversary
 is.
 
-| | Experiment | What it measures | Radio? | δ scaling |
-|---|---|---|---|---|
-| **1** (Type I) | Digital reachability | Software upper bound: smallest ℓ∞ radius to flip the victim to each class, shortfall Δ, ρ = R/ε_phys, proxy BER | no | — |
-| **2** (Type II) | Single-channel OTA | δ summed into the victim replay, radiated through the victim's own chain (ch1 silent) | yes | SCALE ≈ 13.06 |
-| **3** (Type III) | Two-channel OTA | Victim replay on ch0, δ on ch1 from a **separate MIMO-locked adversary antenna** (the realistic attack) | yes | SCALE = 1 |
+| Experiment | What it measures | Radio? | δ scaling |
+|---|---|---|---|
+| **Type I Baseline** | Software upper bound: smallest ℓ∞ radius to flip the victim to each class, shortfall Δ, ρ = R/ε_phys, proxy BER | no | — |
+| **Type II Adversary** | δ summed into the victim replay, radiated through the victim's own chain (ch1 silent) | yes | SCALE ≈ 13.06 |
+| **Type III Adversary** | Victim replay on ch0, δ on ch1 from a **separate MIMO-locked adversary antenna** (the realistic attack) | yes | SCALE = 1 |
 
-**Experiment 4 — Robustness Against Authentication Model Variations.** Does the fragility depend on the
+**Experiment 4: Robustness Against Authentication Model Variations.** Does the fragility depend on the
 classifier? Four variations (A4 is reported as a table):
 
 | | Varies | One-line finding |
@@ -71,7 +69,7 @@ classifier? Four variations (A4 is reported as a table):
 | **A3** | Physics SVM/RF (feature-explicit) | Partially resists (~2× budget) but is not a defense |
 | **A4** | Representation: time vs frequency CVNN | Fragility is representation-invariant; geometry is representation-dependent (corr 0.324) |
 
-**Experiment 5 — Adversary Realism Variations.** How does the attack hold up under a more realistic
+**Experiment 5: Adversary Realism Variations.** How does the attack hold up under a more realistic
 adversary? Two variations, both run through the Experiment 3 two-channel pipeline:
 
 | | Varies | One-line finding |
@@ -143,7 +141,7 @@ and installed. They are **not** vendored here; the `training/flowgraphs/` script
 
 **Navigating.** The canonical reproducible path is the §6 pipeline; the single authoritative data
 index is `docs/exp3_all_results_byexp.xlsx`. Superseded/dated snapshots from the development repo were
-**not** carried into this artifact (§12).
+**not** carried into this artifact.
 
 ---
 
@@ -180,7 +178,11 @@ variable, defaulting to `~/captures`. Point it at wherever you unpacked the bund
 ```bash
 export CAPTURES_ROOT=/path/to/captures
 ```
-Then copy the three models (§3.3) into `trained_models/` (scripts take `--model trained_models/fingerprint_cvnn.pt`).
+Then create the models folder and copy the three `.pt` (§3.3) into it:
+```bash
+mkdir -p trained_models && cp /path/to/bundle/models/*.pt trained_models/
+```
+(scripts take `--model trained_models/fingerprint_cvnn.pt`). The folder is not in the repo — you create it.
 
 ### 3.1 Enrollment dataset — `${CAPTURES_ROOT}/enrollment/`
 
@@ -560,33 +562,3 @@ bits_compared`.
   (payload = 4000 bits/frame, so `bits_compared` = decoded_frames × 4000), never a bare 0.
 - **Crossover** = first ε where the target becomes the plurality class.
 
----
-
-## 11. Gotchas (each cost real testbed time)
-
-1. **`rx-gain 0.93` everywhere** — a mismatch makes the *unperturbed* victim misclassify and every
-   fool% a baseline artifact. The gate (§6.5) catches it in 60 s.
-2. **Refit the model each session** (§6.2) — reused models fail on re-leveled enrollments.
-3. **`--tgt-dst` = the target's 1-based class index** (e.g. `device_1` = 1); the bank name, `TGT`, and
-   `--tgt-dst` must all refer to the same target class.
-4. **Never edit a running bash script** (bash re-reads by byte offset) — edit via an atomic `mv`.
-5. **Disk**: captures are ~6 GB (2-ch) / ~5 GB (SC); keep `KEEP_CAPTURES=0`; merge score CSVs by
-   column name, not position.
-6. **Don't interrupt a live OTA run**; the MIMO Qt GUI must stay visible.
-7. **Two-channel is SCALE=1**; only single-channel (Experiment 2) applies the received→TX SCALE.
-
----
-
-## 12. Caveats, superseded artifacts, citation
-
-This artifact carries **only the canonical reproduction path**. The development repo's superseded /
-duplicate files (dated campaign drivers, pre-SCALE=1 crafting and TX engines, one-off orchestration
-shells, ~100 dated `*.pt` iterations, and exploratory figure variants) were **not** carried over. Shared
-modules live in `lib/` (imported across experiments); the experiment entry points import them by name.
-
-- **B1 figures**: an earlier `SCALE=13.06` two-channel scaling bug (fixed to `SCALE=1`) means the
-  superseded B1 runs were re-baselined; the shipped `docs/b1_cvnn_*` CSVs are the canonical set.
-- The two shared GNU Radio flowgraphs and the enrollment wrappers live under `training/flowgraphs/`; the
-  OTA runners in `experiment_2/` and `experiment_3/` reference them and each other by repo-relative path.
-
-**License:** see `LICENSE`. **Citation:** add the WiSec 2027 BibTeX here once the paper is accepted.
