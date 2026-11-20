@@ -53,11 +53,11 @@ data and models are hosted externally (reproduction tiers in **§7**).
 physical realism); Experiments 4–5 vary *what* classifier is attacked and *how realistic* the adversary
 is.
 
-| Experiment | What it measures | Radio? | δ scaling |
+| Experiment 1-3 | What it measures | Radio? | δ scaling |
 |---|---|---|---|
-| **Type I Baseline** | Software upper bound: smallest ℓ∞ radius to flip the victim to each class, shortfall Δ, ρ = R/ε_phys, proxy BER | no | — |
-| **Type II Adversary** | δ summed into the victim replay, radiated through the victim's own chain (ch1 silent) | yes | SCALE ≈ 13.06 |
-| **Type III Adversary** | Victim replay on ch0, δ on ch1 from a **separate MIMO-locked adversary antenna** (the realistic attack) | yes | SCALE = 1 |
+| **Experiment 1: Type I Baseline** | Software upper bound: smallest ℓ∞ radius to flip the victim to each class, shortfall Δ, ρ = R/ε_phys, proxy BER | no | — |
+| **Experiment 2: Type II Adversary** | δ summed into the victim replay, radiated through the victim's own chain (ch1 silent) | yes | SCALE ≈ 13.06 |
+| **Experiment 3: Type III Adversary** | Victim replay on ch0, δ on ch1 from a **separate MIMO-locked adversary antenna** (the realistic attack) | yes | SCALE = 1 |
 
 **Experiment 4: Robustness Against Authentication Model Variations.** Does the fragility depend on the
 classifier? Four variations (Exp 4.4 is reported as a table):
@@ -226,9 +226,9 @@ impersonate, `<K>` the target's 1-based index.
 | 4. Build victim replay | `experiment_3/exp3_map_detected_ids.py`, `experiment_3/build_ch0_matched.py` | no | 6.4 |
 | 5. Silent-adversary gate | `experiment_3/run_2ch.py`, `experiment_3/score_2ch.py` | yes | 6.5 |
 | 6. Craft δ banks | `experiment_3/exp3_make_ota_perturbations.py` | no | 6.6 |
-| Experiment 1 Reachability | `experiment_1/exp1_reachability.py` | no | 7 |
-| Experiment 2 Single-channel | `experiment_2/run_sc.sh` / `campaign.sh sc_*` | yes | 7 |
-| Experiment 3 Two-channel | `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
+| Experiment 1: Type I Baseline | `experiment_1/exp1_reachability.py` | no | 7 |
+| Experiment 2: Type II Adversary | `experiment_2/run_sc.sh` / `campaign.sh sc_*` | yes | 7 |
+| Experiment 3: Type III ADversary | `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
 
 ### 4.1 Collect enrollment — `training/flowgraphs/enroll_calib.py`
 Bring a TX radio up once, calibrate its gain to a target RX level, capture 3 clean runs/device via the
@@ -422,10 +422,10 @@ Reproduction has tiers; **most reviewers need nothing beyond this repo.**
 
 | Tier | Reproduces | Data to download | Size |
 |---|---|---|---|
-| **1 — Results** | every figure, table, and the workbook | **nothing** — the shipped `docs/*.csv` in this repo (verified: the `plots/` scripts regenerate) | **0** |
-| **2 — Recompute** | Experiment 1 reachability, Experiment 4, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19 GB** |
-| **3 — Re-score raw OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs | ~90 GB |
-| **4 — Re-run OTA** | the whole pipeline | everything **+ the radios (§2)** | — |
+| **1 Results** | every figure, table, and the workbook | **nothing** — the shipped `docs/*.csv` in this repo (verified: the `plots/` scripts regenerate) | **0** |
+| **2 Recompute** | Experiment 1 reachability, Experiment 4, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19 GB** |
+| **3 Re-score raw OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs | ~90 GB |
+| **4 Re-run OTA** | the whole pipeline | everything **+ the radios (§2)** | — |
 
 So: **clone the repo and run the scripts to reproduce every reported result.** Download data only to
 recompute from scratch.
