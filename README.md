@@ -336,7 +336,7 @@ Everything below needs only Python + the shipped CSVs in `docs/` (no hardware, n
 > the enrollment windows, and that model is optional (see §3.3 — you can retrain via §6.2 instead).
 > Scripts self-locate the repo root, so they run from any working directory.
 
-**A. Re-render the Experiment 3 (two-channel OTA) figures** from the shipped data:
+**A. Re-render the Experiment 3: Type III Adversary figures** from the shipped data:
 ```bash
 python3 plots/plot_exp3_sidebyside.py    # fooling + BER vs ε (embedded data)
 python3 plots/plot_exp3_rejection.py     # frame rejections vs ε
@@ -347,7 +347,7 @@ python3 plots/plot_exp3_rejection.py     # frame rejections vs ε
 python3 plots/make_results_workbook_byexp.py   # -> docs/exp3_all_results_byexp.xlsx
 ```
 
-**C. Run Experiment 1 digital reachability** (needs a model in `trained_models/` + the enrollment
+**C. Run Experiment 1: Type I Classifier reachability** (needs a model in `trained_models/` + the enrollment
 windows, no radio):
 ```bash
 python3 experiment_1/exp1_reachability.py \
@@ -470,7 +470,7 @@ Each experiment below lists its one-line goal, how to reproduce it, the result d
 produces. Shared setup (model + enrollment + δ banks) comes from §6. The master data index for every
 experiment is `docs/exp3_all_results_byexp.xlsx`.
 
-### Experiment 1 (Type I) — Digital reachability (no radio)
+### Experiment 1 (Type I) — Classifier reachability (no radio)
 ```bash
 python3 experiment_1/exp1_reachability.py --model trained_models/fingerprint_cvnn.pt --base "$ENR" --out reachability.csv
 ```
@@ -478,7 +478,7 @@ Data: `reachability_matrix.csv`, `reachability_shortfall_curves.{npz,csv}`,
 `exp3_eps_phys_empirical.{csv,npz}`, `reachability_cvnn.csv`. Figures: `plots/make_e1_diagram.py`,
 `plots/make_digital_vs_ota.py`. Produces the reachability table.
 
-### Experiment 2 (Type II) — Single-channel OTA — `campaign.sh sc_tgt_d1 | sc_unt`
+### Experiment 2 (Type II Adversary) — `campaign.sh sc_tgt_d1 | sc_unt`
 δ summed into the victim replay (ch1 = zeros), fine grid 0.10–0.50. `campaign.sh` reads **exported**
 `A` and `CH0`.
 ```bash
@@ -491,7 +491,7 @@ cd experiment_2 && ./run_sc.sh        # both single-channel arms (calls ../exper
 ```
 Output `$A/score_sc_{tgt_d1,unt}_r<RUN>_<method>.csv`. Figure: `plots/make_sc_vs_2ch_plot.py`.
 
-### Experiment 3 (Type III) — Two-channel OTA — `campaign.sh ch2_tgt_d1 | ch2_unt`
+### Experiment 3 (Type III Adversary) — `campaign.sh ch2_tgt_d1 | ch2_unt`
 Victim replay on ch0, δ on ch1, MIMO-locked, masked 16-pt grid, **SCALE=1**. The Qt GUI shows per method.
 ```bash
 export A=$CAPTURES_ROOT/attack_assets; export CH0=$A/ch0_run3_<N>.bin
