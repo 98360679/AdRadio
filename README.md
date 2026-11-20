@@ -97,7 +97,7 @@ AdvRadio/                               # WiSec 2027 artifact (code only)
 │   │   ├── lab_exp3_enroll_calib.py    #     enrollment capture driver
 │   │   ├── enroll_d{1..5}_runs.sh      #     per-device enrollment wrappers
 │   │   └── wifi_tx_updated.py  wifi_rx.py  wifi_adversary_tx.py
-│   ├── exp3_train_fingerprint.py       #   train / fine-tune the CVNN
+│   ├── exp3_train_fingerprint.py       #   train the CVNN
 │   ├── exp3_validation_confusion.py    #   held-out val accuracy + confusion (95.98%)
 │   └── exp3_crossday_eval.py           #   cross-day per-device accuracy
 │
@@ -324,7 +324,7 @@ reproduction is §7.
 ## 6. Full capture → attack pipeline (step by step)
 
 Values in `<angle brackets>` are yours to fill: `<N>` number of
-detected victim frames, `<scale>` from §6.5, `<prev>` checkpoint to fine-tune from, `<victim>` the
+detected victim frames, `<scale>` from §6.5, `<victim>` the
 victim label (e.g. `device_5`), `<V>` its 1-based class index (e.g. `5`), `<target>` the class to
 impersonate, `<K>` the target's 1-based index.
 
@@ -354,17 +354,17 @@ bash enroll_d1_runs.sh    # then swap radio → enroll_d2_runs.sh → d3 → d4 
 ```
 Each run ≈ 1 GB, 100+ frames, `bad_packet=no`, within tolerance of −30 dB.
 
-### 6.2 Train / fine-tune — `training/exp3_train_fingerprint.py`
+### 6.2 Train — `training/exp3_train_fingerprint.py`
 **Refit every session** — a reused prior-day model fails on a re-leveled enrollment. Needs a `_5dev`
 symlink tree (`device_N → device_(N+1)`, **clean_run only**). Produces `fingerprint_<tag>.pt`.
-Args: `--root`, `--val-run` (3), `--epochs` (use **80**), `--init <ckpt>` (fine-tune; omit for scratch),
+Args: `--root`, `--val-run` (3), `--epochs` (use **80**),
 `--tag`, `--lr`, `--cfo-correct`, `--rebuild`.
 ```bash
 ENR=$CAPTURES_ROOT/enrollment
 TRN=$CAPTURES_ROOT/train; rm -rf "$TRN"
 for n in 1 2 3 4 5; do mkdir -p "$TRN/device_$n"
   for r in 1 2 3; do ln -s "$ENR/device_$((n+1))/clean_run_$r.bin" "$TRN/device_$n/clean_run_$r.bin"; done; done
-python3 training/exp3_train_fingerprint.py --init trained_models/fingerprint_cvnn.pt --val-run 3 --epochs 80 --root "$TRN" --tag cvnn
+python3 training/exp3_train_fingerprint.py --val-run 3 --epochs 80 --root "$TRN" --tag cvnn
 #   -> trained_models/fingerprint_cvnn.pt
 ```
 
