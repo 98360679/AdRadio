@@ -60,22 +60,22 @@ is.
 | **Type III Adversary** | Victim replay on ch0, δ on ch1 from a **separate MIMO-locked adversary antenna** (the realistic attack) | yes | SCALE = 1 |
 
 **Experiment 4: Robustness Against Authentication Model Variations.** Does the fragility depend on the
-classifier? Four variations (A4 is reported as a table):
+classifier? Four variations (Exp 4.4 is reported as a table):
 
-| | Varies | One-line finding |
-|---|---|---|
-| **A1** | Architecture: real CNN1D vs complex CVNN | Fragility is task-, not architecture-, bound (CNN1D reproduces CVNN reachability, corr 0.987) |
-| **A2** | Cross-model transferability | δ crafted on CVNN transfers to CNN1D and physics SVM/RF (τ ≈ 0.90, near-black-box) |
-| **A3** | Physics SVM/RF (feature-explicit) | Partially resists (~2× budget) but is not a defense |
-| **A4** | Representation: time vs frequency CVNN | Fragility is representation-invariant; geometry is representation-dependent (corr 0.324) |
+| Experiment 4 | One-line finding |
+|---|---|
+| **Exp 4.1: a real-valued model** | Fragility is task-, not architecture-, bound (CNN1D reproduces CVNN reachability, corr 0.987) |
+| **Exp 4.2: transfer across models** | δ crafted on CVNN transfers to CNN1D and physics SVM/RF (τ ≈ 0.90, near-black-box) |
+| **Exp 4.3: explicit physical features** | Partially resists (~2× budget) but is not a defense |
+| **Exp 4.4: spectral representation** | Fragility is representation-invariant; geometry is representation-dependent (corr 0.324) |
 
 **Experiment 5: Adversary Realism Variations.** How does the attack hold up under a more realistic
 adversary? Two variations, both run through the Experiment 3 two-channel pipeline:
 
-| | Varies | One-line finding |
-|---|---|---|
-| **B1** | Adversary power / measured received PSR sweep | Two-channel fooling, target rate, and BER vs adversary gain; distance-ratio reach |
-| **B2** | Matched (per-frame) vs universal (one waveform) δ | A realizable universal δ needs larger ε than per-frame matched δ |
+| Experiment 5 | One-line finding |
+|---|---|
+| **Exp 5.1: perturbation power** | Adversary power / measured received PSR sweep: two-channel fooling, target rate, and BER vs adversary gain; distance-ratio reach |
+| **Exp 5.2: one perturbation for every frame** | Matched (per-frame) vs universal (one-waveform) δ — a realizable universal δ needs larger ε than per-frame matched δ |
 
 ---
 
@@ -109,10 +109,10 @@ AdvRadio/                               # WiSec 2027 artifact (code only)
 │   └── run_2ch.{py,sh}  score_2ch.py  campaign.sh  build_ch1.py  build_ch0_matched.py
 │       exp3_rx_capture.py  exp3_adversary_tx.py  exp3_make_ota_perturbations.py
 │       exp3_map_detected_ids.py  exp3_ber_eval.py
-├── experiment_4/   # Robustness vs authentication-model variation (A1–A4)
-│   └── exp3_transfer_cnn1d_cvnn.py (A2)   exp3_a3_feature_model.py (A3)
-├── experiment_5/   # Adversary-realism variation (B1, B2) — reuses the experiment_3 pipeline
-│   └── README.md                       #   B1/B2 run via experiment_3; figures in plots/ (see §5)
+├── experiment_4/   # Robustness vs authentication-model variation (Exp 4.1–4.4)
+│   └── exp3_transfer_cnn1d_cvnn.py (Exp 4.2)   exp3_a3_feature_model.py (Exp 4.3)
+├── experiment_5/   # Adversary-realism variation (Exp 5.1, 5.2) — reuses the experiment_3 pipeline
+│   └── README.md                       #   Exp 5.1/5.2 run via experiment_3; figures in plots/ (see §5)
 │
 ├── plots/          # ALL figure/graph generators (self-locating; run from anywhere)
 │   ├── plot_exp{1,2,3}_*.py  plot_tables.py          # Exp 1/2/3 paper figures + result tables
@@ -219,9 +219,9 @@ only part in the minimal bundle is `attack_assets/`'s small TX waveforms (`ch0_r
 | Directory | Role | Key contents |
 |---|---|---|
 | `attack_assets/` | OTA victim/adversary waveforms (Exp 2/3) | `ch0_run3_107.bin` (victim replay), `ch1_e04_s1.bin` (adversary δ) |
-| `attack_b1/` | B1 adversary-power sweep | `b1_cvnn_foolber_<method>.csv`, `b1_cvnn_tgt_d3_foolber_<method>.csv` |
-| `attack_a1_transfer/` | A1 cross-model transfer | per-model white-box score CSVs |
-| `attack_a1_gain/` | A1 gain sweep | `g16_<method>.csv` |
+| `attack_b1/` | Exp 5.1 adversary-power sweep | `b1_cvnn_foolber_<method>.csv`, `b1_cvnn_tgt_d3_foolber_<method>.csv` |
+| `attack_a1_transfer/` | Exp 4.2 cross-model transfer | per-model white-box score CSVs |
+| `attack_a1_gain/` | Exp 4.1 gain sweep | `g16_<method>.csv` |
 | `attack_enroll/` | attack re-enrollment baseline | `attack/ch0.bin`, `ota_perturbations/` (first δ bank) |
 
 Filename legend: `ch0*.bin` = victim/legit replay · `ch1*.bin`, `pert_*/delta_*.npy` = adversary
@@ -242,8 +242,8 @@ Three checkpoints, one per architecture, all scoring `WIN=1024` complex windows 
 | Model | Size | Arch | Role |
 |---|---|---|---|
 | **fingerprint_cvnn.pt** | 1.72 M | CVNN | main classifier (Experiments 1–3, and the Experiment 5 sweeps) |
-| fingerprint_cnn1d.pt | 490 K | CNN1D | A1 real-CNN baseline |
-| fingerprint_freqcvnn.pt | 1.72 M | FreqCVNN | A4 frequency-domain variant |
+| fingerprint_cnn1d.pt | 490 K | CNN1D | Exp 4.1 real-CNN baseline |
+| fingerprint_freqcvnn.pt | 1.72 M | FreqCVNN | Exp 4.4 frequency-domain variant |
 
 Architectures: **CVNN** = time-domain complex CNN (`exp3_fp_model.py`), **FreqCVNN** = FFT-first
 (`exp3_freqcvnn.py`), **CNN1D** = real 1-D CNN baseline (`exp3_cnn1d.py`).
@@ -300,7 +300,7 @@ python3 plots/plot_exp3_sidebyside.py    # fooling + BER vs ε (embedded data)
 python3 plots/plot_exp3_rejection.py     # frame rejections vs ε
 ```
 
-**B. Rebuild the master results workbook** (one sheet per A1–A4, B1, B2):
+**B. Rebuild the master results workbook** (one sheet per Exp 4.1–4.4, Exp 5.1–5.2):
 ```bash
 python3 plots/make_results_workbook_byexp.py   # -> docs/exp3_all_results_byexp.xlsx
 ```
@@ -464,30 +464,30 @@ frame rejections) are rendered from embedded data by `plots/plot_exp3_sidebyside
 `plots/plot_exp3_rejection.py`.
 
 ### Experiment 4 — Robustness against authentication-model variations
-Does the fragility depend on the classifier? Four variations (A4 is a table). Crafting as in §6.
+Does the fragility depend on the classifier? Four variations (Exp 4.4 is a table). Crafting as in §6.
 
-- **A1 — CNN1D vs CVNN (architecture).** Train the real CNN1D baseline (`lib/exp3_cnn1d.py`), run its
+- **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real CNN1D baseline (`lib/exp3_cnn1d.py`), run its
   reachability, compare to CVNN. Data: `reachability_matrix_cnn1d.csv`, `docs/a1_*_ota_ber.csv`,
   `docs/a1cvnn_*_ota_ber.csv`. Figures: `plots/make_a1_compare.py` → `docs/a1_cnn1d_vs_cvnn.*`,
   `plots/make_cnn1d_fooling_plot.py`.
-- **A2 — Cross-model transferability.** δ crafted on CVNN applied to CNN1D and the physics SVM/RF.
+- **Exp 4.2 — transfer across models.** δ crafted on CVNN applied to CNN1D and the physics SVM/RF.
   `experiment_4/exp3_transfer_cnn1d_cvnn.py`. Data: `exp3_transfer_cnn1d_cvnn.{csv,npz}`,
   `exp3_ota_multimodel.csv`. Figures: `plots/make_transfer_plot.py`, `plots/make_ota_multimodel_plot.py`.
   (Workbook sheets `A2-ML`, `A2-transfer-raw`.)
-- **A3 — Physics feature model (SVM/RF).** Feature-explicit classifier on explicit impairment features.
+- **Exp 4.3 — explicit physical features (SVM/RF).** Feature-explicit classifier on explicit impairment features.
   `experiment_4/exp3_a3_feature_model.py`. Data: `exp3_a3_feature_model.{csv,npz}`. Figure:
   `plots/make_a3_plot.py` → `docs/a3_feature_model_robustness.*`.
-- **A4 — Frequency-domain CVNN.** FFT-first classifier (`lib/exp3_freqcvnn.py`); representation-invariance
+- **Exp 4.4 — spectral representation (frequency-domain CVNN).** FFT-first classifier (`lib/exp3_freqcvnn.py`); representation-invariance
   of the fragility, **reported as a table** (no figure). Data: `reachability_matrix_freqcvnn.csv`.
 
 ### Experiment 5 — Adversary realism variations
 Both run through the Experiment 3 two-channel pipeline (§6); no dedicated scripts.
 
-- **B1 — Adversary power / PSR sweep.** Two-channel fooling, target rate, and BER vs adversary gain and
+- **Exp 5.1 — perturbation power.** Two-channel fooling, target rate, and BER vs adversary gain and
   measured received PSR (ε=0.01); distance-ratio reach. Runs on `$CAPTURES_ROOT/attack_b1`. Data:
   `docs/b1_cvnn_foolber_<method>.csv` (untargeted), `docs/b1_cvnn_tgt_d3_foolber_<method>.csv`
   (targeted device_3). Figures: `plots/make_b1_combined_cvnn.py`, `plots/make_pwr_fool_ber.py`.
-- **B2 — Matched vs universal δ.** Per-frame matched δ vs one universal waveform reused on every frame
+- **Exp 5.2 — one perturbation for every frame.** Per-frame matched δ vs one universal waveform reused on every frame
   (the realizable adversary). Data: `docs/b2_matched_vs_unmatched.csv`. Figure:
   `plots/make_b2_matched_vs_unmatched.py` → `docs/b2_matched_vs_unmatched.*`.
 
@@ -510,12 +510,12 @@ A2-transfer-raw, A3-ML, A4-ML, B1-W, B2-W).
 `plots/plot_exp3_targeted.py` (Exp 3) · `plots/plot_tables.py` (result tables). Supporting:
 `plots/make_e1_diagram.py`, `plots/make_digital_vs_ota.py`, `plots/make_sc_vs_2ch_plot.py`.
 
-**Experiment 4 (A1–A4):** `plots/make_a1_compare.py`, `plots/make_cnn1d_fooling_plot.py` (A1) ·
-`plots/make_transfer_plot.py`, `plots/make_ota_multimodel_plot.py` (A2) · `plots/make_a3_plot.py` (A3).
-A4 is reported as a table.
+**Experiment 4 (Exp 4.1–4.4):** `plots/make_a1_compare.py`, `plots/make_cnn1d_fooling_plot.py` (Exp 4.1) ·
+`plots/make_transfer_plot.py`, `plots/make_ota_multimodel_plot.py` (Exp 4.2) · `plots/make_a3_plot.py` (Exp 4.3).
+Exp 4.4 is reported as a table.
 
-**Experiment 5 (B1, B2):** `plots/make_b1_combined_cvnn.py`, `plots/make_pwr_fool_ber.py` (B1) ·
-`plots/make_b2_matched_vs_unmatched.py` (B2).
+**Experiment 5 (Exp 5.1, 5.2):** `plots/make_b1_combined_cvnn.py`, `plots/make_pwr_fool_ber.py` (Exp 5.1) ·
+`plots/make_b2_matched_vs_unmatched.py` (Exp 5.2).
 
 Regenerate everything:
 ```bash
