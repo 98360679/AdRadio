@@ -77,6 +77,15 @@ download and no models. Part **C** (reachability) is **Tier 2**: it requires a `
 enrollment data from the minimal bundle (§3). All scripts locate the repository root automatically and
 therefore run from any directory.
 
+**0. Get the code & install** (one time). Obtain the artifact — download and unzip the supplied archive (or
+`git clone` the repository once de-anonymized) — then change into the extracted folder and install the
+Python dependencies:
+```bash
+cd <extracted folder>               # wherever you unzipped it — the folder containing requirements.txt and README.md
+pip install -r requirements.txt     # numpy, scipy, matplotlib, pandas, openpyxl, scikit-learn, torch
+```
+All commands below are relative to that folder (run them from there).
+
 **A. Re-render the Experiment 3: Type III Adversary figures** from the shipped data:
 ```bash
 python3 plots/plot_exp3_sidebyside.py    # fooling + BER vs ε (embedded data)
@@ -273,7 +282,7 @@ repository were **not** carried into this artifact.
 ### Software
 
 ```bash
-pip install -r requirements.txt     # numpy, scipy, matplotlib, scikit-learn, torch
+pip install -r requirements.txt     # numpy, scipy, matplotlib, pandas, openpyxl, scikit-learn, torch
 ```
 For GPU training, install the CUDA build of `torch` from https://pytorch.org/. Every step except OTA
 capture — Experiment 1, all scoring, and all figure regeneration — requires only Python and PyTorch,

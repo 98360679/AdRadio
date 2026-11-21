@@ -11,6 +11,8 @@
 
 numpy
 scipy
+pandas
 matplotlib
+openpyxl
 scikit-learn
 torch
