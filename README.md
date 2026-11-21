@@ -72,9 +72,8 @@ adversary. Both run through the Experiment 3 two-channel pipeline:
 
 ## 2. Quick start — reproduce results without radios
 
-Parts **A** and **B** are **Tier 1** (§3): they require only Python and the CSVs under `docs/`, with no
-download and no models. Part **C** (reachability) is **Tier 2**: it requires a `.pt` model and the
-enrollment data from the minimal bundle (§3). All scripts locate the repository root automatically and
+Parts **A** and **B** are **Tier 1** (§3): Both shipped in this repo, with no download and no models. Part **C** (reachability) is
+**Tier 2**: it requires a `.pt` model and the enrollment data from the minimal bundle (§3). All scripts locate the repository root automatically and
 therefore run from any directory.
 
 **0. Get the code & install** (one time). Obtain the artifact — download and unzip the supplied archive (or
@@ -88,8 +87,8 @@ All commands below are relative to that folder (run them from there).
 
 **A. Re-render the Experiment 3: Type III Adversary figures** from the shipped data:
 ```bash
-python3 plots/plot_exp3_sidebyside.py    # fooling + BER vs ε (embedded data)
-python3 plots/plot_exp3_rejection.py     # frame rejections vs ε
+python3 plots/plot_exp3_sidebyside.py    # fooling + BER vs ε; figures to plots/output/
+python3 plots/plot_exp3_rejection.py     # frame rejections vs ε; figures to plots/output/
 ```
 
 **B. Rebuild the master results workbook** (one sheet per Exp 4.1–4.4, Exp 5.1–5.2):
@@ -98,8 +97,11 @@ python3 plots/make_results_workbook_byexp.py   # -> docs/exp3_all_results_byexp.
 ```
 
 **C. Run Experiment 1: Type I Classifier reachability** (Tier 2: needs a model in `trained_models/` + the
-enrollment windows, no radio):
+enrollment windows, no radio). First download the minimal bundle (§3), point `CAPTURES_ROOT` at it, and
+copy the models into place:
 ```bash
+export CAPTURES_ROOT=/path/to/bundle               # the unpacked bundle root — it contains enrollment/ and models/
+mkdir -p trained_models && cp "$CAPTURES_ROOT"/models/*.pt trained_models/
 python3 experiment_1/exp1_reachability.py \
   --model trained_models/fingerprint_cvnn.pt \
   --base  $CAPTURES_ROOT/enrollment \
@@ -133,10 +135,11 @@ datasets are required only to recompute results from scratch.
 > After downloading, set `CAPTURES_ROOT` to the bundle root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
 
 ```
-captures/
+bundle/                   #   = $CAPTURES_ROOT
 ├── enrollment/           #   per-device enrollment captures (§3.1)   ~19 GB
+├── models/               #   fingerprint_{cvnn,cnn1d,freqcvnn}.pt  ~4 MB
 └── attack_assets/        #   victim replay + δ waveform (ch0_run3_107.bin, ch1_e04_s1.bin)  ~0.3 GB
-trained_models/           #   fingerprint_{cvnn,cnn1d,freqcvnn}.pt — place at repo root (§3.3)  ~4 MB
+trained_models/           #   copy models/*.pt here, at the repo root (§3.3)
 ```
 
 The raw OTA capture sessions (Tier 3; ~90 GB of `rx_*.bin`) serve as provenance for byte-level audit.
@@ -145,11 +148,11 @@ They are **available from the authors on request** and are not included in the m
 **Capture location.** Each script reads the capture root from the `CAPTURES_ROOT` environment
 variable, which defaults to `~/captures`. Set it to the directory into which the bundle was unpacked:
 ```bash
-export CAPTURES_ROOT=/path/to/captures
+export CAPTURES_ROOT=/path/to/bundle
 ```
 Then create the models directory and copy the three `.pt` checkpoints (§3.3) into it:
 ```bash
-mkdir -p trained_models && cp /path/to/bundle/models/*.pt trained_models/
+mkdir -p trained_models && cp "$CAPTURES_ROOT"/models/*.pt trained_models/
 ```
 (scripts accept `--model trained_models/fingerprint_cvnn.pt`). This directory is not part of the repository and must be created.
 
