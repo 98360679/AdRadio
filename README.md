@@ -45,9 +45,9 @@ the realism of the adversary.
 
 | Experiment 1-3 | One-line finding | Radio? | δ scaling |
 |---|---|---|---|
-| **Experiment 1: Type I Baseline** | Receiver-side perturbation of I/Q frames readily fools the classifier, but the BER rises sharply, making the attack easy to detect — a software upper bound | no | — |
-| **Experiment 2: Type II Adversary** | An adversary perturbing at the transmitter forces misidentification while the receiver decodes without bit errors | yes | SCALE ≈ 11.7 (measured, §6.5) |
-| **Experiment 3: Type III Adversary** | A separate adversary radio fools the classifier over the air without bit errors, but only within a narrow range; full evasion becomes detectable | yes | SCALE = 1 |
+| **Exp 1: Type I Baseline** | Receiver-side perturbation of I/Q frames readily fools the classifier, but the BER rises sharply, making the attack easy to detect — a software upper bound | no | — |
+| **Exp 2: Type II Adversary** | An adversary perturbing at the transmitter forces misidentification while the receiver decodes without bit errors | yes | SCALE ≈ 11.7 (measured, §6.5) |
+| **Exp 3: Type III Adversary** | A separate adversary radio fools the classifier over the air without bit errors, but only within a narrow range; full evasion becomes detectable | yes | SCALE = 1 |
 
 **Experiment 4: Robustness across authentication models.** These four variations test whether the
 vulnerability depends on the specific classifier (Exp 4.4 is reported as a table):
@@ -121,7 +121,7 @@ result.
 |---|---|---|---|
 | **1 Results** | every figure, table, and the workbook | **nothing** — the `docs/*.csv` shipped in this repo, from which the `plots/` scripts regenerate the figures | **0** |
 | **2 Recompute** | Experiment 1 reachability, Experiment 4, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19&nbsp;GB** |
-| **3 Re-score&nbsp;raw&nbsp; OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs (on request, §3.2) | ~90&nbsp;GB |
+| **3 Rescore&nbsp;raw&nbsp;OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs (on request, §3.2) | ~90&nbsp;GB |
 | **4 Re-run OTA** | the whole pipeline | everything **+ the radios (§5)** | — |
 
 In summary, cloning the repository and running the scripts reproduces every reported result. The
@@ -129,7 +129,7 @@ datasets are required only to recompute results from scratch.
 
 ### Minimal bundle (Tier 2)
 
-> **Download:** `<anonymized-dataset-url>` (link withheld for double-blind review)  *(also cited in the paper)*
+> **Download:** https://uofnebraska-my.sharepoint.com/personal/98360679_nebraska_edu/Documents/Forms/All.aspx  (link withheld for double-blind review)  *(also cited in the paper)*
 >
 > After downloading, set `CAPTURES_ROOT` to the bundle root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
 
@@ -266,7 +266,7 @@ therefore runs correctly **from any working directory**
 The shared OTA runners (`experiment_3/campaign.sh`, `experiment_2/run_sc.sh`) reference each other
 by repository-relative path, so the Experiment 2 and 3 campaigns operate across the directory split.
 
-**Hosted externally (not in git; §3):** the ~19 GB recompute bundle (enrollment and models) and the raw
+**Hosted externally (not in testbed; §3):** the ~19 GB recompute bundle (enrollment and models) and the raw
 OTA capture sessions (provenance).
 
 **Required separately for OTA (§5):** the `gr-foo` and `gr-ieee802-11` GNU Radio 3.10 OOT modules, built
