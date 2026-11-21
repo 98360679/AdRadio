@@ -67,16 +67,6 @@ adversary. Both run through the Experiment 3 two-channel pipeline:
 | **Exp 5.1: perturbation power** | Sweep of adversary power and measured received PSR: two-channel fooling rate, target rate, and BER versus adversary gain, with the distance-ratio reach |
 | **Exp 5.2: one perturbation for every frame** | Per-frame matched δ versus a single universal waveform: a realizable universal δ requires a larger ε than a per-frame matched δ |
 
-> **Terminology (paper vs. code).** The paper calls the **1,024-sample model input** an **I/Q frame**
-> (the sliding-window input, matching our prior work — 1,024 samples here vs. 288 there). In the code and
-> this guide, that same unit is a **window** (`WIN = 1024`; see `frame_to_windows` in `fp_model.py`).
-> The code/README **frame** (`FRAME_LEN = 15360`; e.g. "detected frames", `frames_decoded`,
-> `ch0_run3_<N>.bin`) is the full 802.11 transmission, which the paper does not name separately and which
-> yields **13 windows**. In short: **paper "I/Q frame" = code/README "window"**, and a code/README
-> "frame" is one 802.11 transmission (13 windows each).
-
-> **Note on "the paper."** There is no manuscript PDF in this repo; results are reproduced from the
-> `plots/` scripts, the workbook `docs/exp3_all_results_byexp.xlsx`, and the CSVs under `docs/`.
 
 ---
 
