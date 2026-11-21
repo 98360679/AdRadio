@@ -19,7 +19,7 @@ harder job -- RF is non-differentiable; noted as follow-on.)
 """
 import os as _os, sys as _sys
 _R = _os.path.abspath(_os.path.dirname(__file__))
-while _R != _os.path.dirname(_R) and not _os.path.isdir(_os.path.join(_R, ".git")):
+while _R != _os.path.dirname(_R) and not _os.path.isdir(_os.path.join(_R, "lib")):
     _R = _os.path.dirname(_R)
 _sys.path.insert(0, _os.path.join(_R, "lib"))
 _os.chdir(_R)
