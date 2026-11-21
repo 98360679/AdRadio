@@ -1,24 +1,24 @@
 # AdRadio — Radio-Fingerprint Adversarial Attacks (Reproducibility Guide)
 
-Over-the-air (OTA) adversarial attacks against a Wi-Fi (802.11 a/g) **device-fingerprinting**
-neural network. A victim radio transmits; an **adversary** radio adds a crafted perturbation so the
-receiver's classifier mis-identifies the victim as another enrolled device — ideally while the
-802.11 link still decodes (BER ≈ 0). The study is organized as **five experiments**: a software upper
-bound (Type I), a single-radio OTA attack (Type II), a realistic two-radio OTA attack (Type III),
-robustness against authentication-model variations (Experiment 4), and adversary-realism variations
-(Experiment 5).
+This repository accompanies a study of over-the-air (OTA) adversarial attacks on a Wi-Fi (802.11a/g)
+**device-fingerprinting** neural network. A victim radio transmits while an **adversary** radio injects
+a crafted perturbation, causing the receiver's classifier to misidentify the victim as another enrolled
+device while the 802.11 link continues to decode (BER ≈ 0). The study comprises **five experiments**: a
+software upper bound (Type I), a single-radio OTA attack (Type II), a two-radio OTA attack (Type III), an
+evaluation of robustness across authentication models (Experiment 4), and an evaluation of adversary
+realism (Experiment 5).
 
-This README is the **WiSec 2027 artifact entry point**: it documents the environment, every
-experiment we ran, and the exact step-by-step commands to reproduce each result and figure. **This repo
-is code only** — the scripts, the shipped result CSVs/figures (`docs/`), and the GNU Radio flowgraphs;
-data and models are hosted externally (reproduction tiers in **§3**).
+This document is the **WiSec 2027 artifact entry point**. It describes the software environment, the
+experiments, and the commands required to reproduce each result and figure. The repository contains
+**source code only**: the analysis scripts, the result CSVs and figures under `docs/`, and the GNU Radio
+flowgraphs. Datasets and trained models are hosted externally and are organized into the reproduction
+tiers described in **§3**.
 
-> ### 🛈 No SDR hardware? You can still reproduce almost everything.
-> **Tiers 1–3 need no radios.** The over-the-air signals are already *recorded* and shipped, so:
-> - **Tier 1** — regenerate **every figure and table** from the shipped `docs/*.csv` (Python only, nothing to download).
-> - **Tiers 2–3** — recompute reachability / model-variation / validation and re-score the OTA fool%/BER by running the classifier on the shipped `.bin` recordings.
+> **Reproducing without SDR hardware.** Tiers 1–3 require no radios, because the over-the-air signals are supplied as recordings:
+> - **Tier 1** regenerates every figure and table from the CSVs under `docs/` (Python only; no download).
+> - **Tiers 2–3** recompute the reachability, model-variation, and validation results, and re-score the OTA fooling-rate and BER metrics by running the classifier on the supplied `.bin` recordings.
 >
-> Only **Tier 4** (collecting *new* transmissions) needs the testbed (§5). Models ship **pre-trained**, and every script runs on **CPU** (GPU optional). See §3 for the tier table.
+> Only **Tier 4** (collecting new transmissions) requires the testbed (§5). Trained models are supplied, and every script runs on CPU; a GPU is optional. The tier table appears in §3.
 
 
 ---
@@ -39,33 +39,33 @@ data and models are hosted externally (reproduction tiers in **§3**).
 
 ## 1. What this reproduces
 
-**Five experiments.** Experiments 1–3 vary *how* the perturbation δ reaches the receiver (increasing
-physical realism); Experiments 4–5 vary *what* classifier is attacked and *how realistic* the adversary
-is.
+The five experiments fall into two groups. Experiments 1–3 vary how the perturbation δ reaches the
+receiver, in order of increasing physical realism. Experiments 4–5 vary the classifier under attack and
+the realism of the adversary.
 
 | Experiment 1-3 | One-line finding | Radio? | δ scaling |
 |---|---|---|---|
-| **Experiment 1: Type I Baseline** | Perturbing I/Q frames at the receiver easily fools the classifier, but the BER rises quickly, so the attack is easy to detect — a software upper bound | no | — |
-| **Experiment 2: Type II Adversary** | An adversary perturbing at the transmitter forces misidentification while the receiver still decodes with no bit errors | yes | SCALE ≈ 11.7 (measured, §6.5) |
-| **Experiment 3: Type III Adversary** | A separate adversary radio fools the classifier over the air without bit errors, but only in a narrow range; full evasion becomes detectable | yes | SCALE = 1 |
+| **Experiment 1: Type I Baseline** | Receiver-side perturbation of I/Q frames readily fools the classifier, but the BER rises sharply, making the attack easy to detect — a software upper bound | no | — |
+| **Experiment 2: Type II Adversary** | An adversary perturbing at the transmitter forces misidentification while the receiver decodes without bit errors | yes | SCALE ≈ 11.7 (measured, §6.5) |
+| **Experiment 3: Type III Adversary** | A separate adversary radio fools the classifier over the air without bit errors, but only within a narrow range; full evasion becomes detectable | yes | SCALE = 1 |
 
-**Experiment 4: Robustness Against Authentication Model Variations.** Does the fragility depend on the
-classifier? Four variations (Exp 4.4 is reported as a table):
+**Experiment 4: Robustness across authentication models.** These four variations test whether the
+vulnerability depends on the specific classifier (Exp 4.4 is reported as a table):
 
 | Experiment 4 | One-line finding |
 |---|---|
-| **Exp 4.1: a real-valued model** | Fragility is task-, not architecture-, bound (CNN1D reproduces CVNN reachability, corr 0.892) |
-| **Exp 4.2: transfer across models** | δ crafted on CVNN transfers to CNN1D and physics SVM/RF (white-box/transferred ε ratio 0.90–0.92, near-black-box) |
-| **Exp 4.3: explicit physical features** | Partially resists (~2× budget) but is not a defense |
-| **Exp 4.4: spectral representation** | Fragility is representation-invariant; geometry is representation-dependent (corr 0.534) |
+| **Exp 4.1: a real-valued model** | The vulnerability is task-dependent, not architecture-dependent: the CNN1D reproduces the CVNN reachability (corr 0.892) |
+| **Exp 4.2: transfer across models** | Perturbations crafted on the CVNN transfer to the CNN1D and to physics-based SVM/RF models (white-box/transferred ε ratio 0.90–0.92; near-black-box) |
+| **Exp 4.3: explicit physical features** | Explicit physical features offer partial resistance (~2× budget) but are not a defense |
+| **Exp 4.4: spectral representation** | The vulnerability is representation-invariant, though its geometry is representation-dependent (corr 0.534) |
 
-**Experiment 5: Adversary Realism Variations.** How does the attack hold up under a more realistic
-adversary? Two variations, both run through the Experiment 3 two-channel pipeline:
+**Experiment 5: Adversary realism.** These two variations test the attack under a more realistic
+adversary. Both run through the Experiment 3 two-channel pipeline:
 
 | Experiment 5 | One-line finding |
 |---|---|
-| **Exp 5.1: perturbation power** | Adversary power / measured received PSR sweep: two-channel fooling, target rate, and BER vs adversary gain; distance-ratio reach |
-| **Exp 5.2: one perturbation for every frame** | Matched (per-frame) vs universal (one-waveform) δ — a realizable universal δ needs larger ε than per-frame matched δ |
+| **Exp 5.1: perturbation power** | Sweep of adversary power and measured received PSR: two-channel fooling rate, target rate, and BER versus adversary gain, with the distance-ratio reach |
+| **Exp 5.2: one perturbation for every frame** | Per-frame matched δ versus a single universal waveform: a realizable universal δ requires a larger ε than a per-frame matched δ |
 
 > **Terminology (paper vs. code).** The paper calls the **1,024-sample model input** an **I/Q frame**
 > (the sliding-window input, matching our prior work — 1,024 samples here vs. 288 there). In the code and
@@ -82,9 +82,10 @@ adversary? Two variations, both run through the Experiment 3 two-channel pipelin
 
 ## 2. Quick start — reproduce results without radios
 
-Parts **A** and **B** are **Tier 1** (§3): Python + the shipped `docs/` CSVs, nothing downloaded, no models.
-Part **C** (reachability) is **Tier 2**: it needs a `.pt` model and the enrollment data from the minimal
-bundle (§3). Scripts self-locate the repo root, so they run from any directory.
+Parts **A** and **B** are **Tier 1** (§3): they require only Python and the CSVs under `docs/`, with no
+download and no models. Part **C** (reachability) is **Tier 2**: it requires a `.pt` model and the
+enrollment data from the minimal bundle (§3). All scripts locate the repository root automatically and
+therefore run from any directory.
 
 **A. Re-render the Experiment 3: Type III Adversary figures** from the shipped data:
 ```bash
@@ -106,28 +107,29 @@ python3 experiment_1/exp1_reachability.py \
   --out   reachability_quickstart.csv
 ```
 
-Full from-raw reproduction (capture, train, craft, OTA, score) is §6; per-experiment
-reproduction is §7.
+Full reproduction from raw captures (capture, train, craft, transmit, score) is described in §6;
+per-experiment reproduction is described in §7.
 
 ---
 
 ## 3. Datasets & models
 
-Reproduction has tiers; **most reviewers need nothing beyond this repo.**
+Reproduction is organized into tiers. The repository alone is sufficient to reproduce every reported
+result.
 
 | Tier | Reproduces | Data to download | Size |
 |---|---|---|---|
-| **1 Results** | every figure, table, and the workbook | **nothing** — the shipped `docs/*.csv` in this repo (verified: the `plots/` scripts regenerate) | **0** |
+| **1 Results** | every figure, table, and the workbook | **nothing** — the `docs/*.csv` shipped in this repo, from which the `plots/` scripts regenerate the figures | **0** |
 | **2 Recompute** | Experiment 1 reachability, Experiment 4, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19&nbsp;GB** |
 | **3 Re-score&nbsp;raw&nbsp; OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs (on request, §3.2) | ~90&nbsp;GB |
 | **4 Re-run OTA** | the whole pipeline | everything **+ the radios (§5)** | — |
 
-So: **clone the repo and run the scripts to reproduce every reported result.** Download data only to
-recompute from scratch.
+In summary, cloning the repository and running the scripts reproduces every reported result. The
+datasets are required only to recompute results from scratch.
 
-### Minimal bundle (Tier 2) — OneDrive
+### Minimal bundle (Tier 2)
 
-> **Download:** https://uofnebraska-my.sharepoint.com/personal/98360679_nebraska_edu/Documents/Forms/All.aspx  (link withheld for double-blind review)  *(also cited in the paper)*
+> **Download:** `<anonymized-dataset-url>` (link withheld for double-blind review)  *(also cited in the paper)*
 >
 > After downloading, set `CAPTURES_ROOT` to the bundle root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
 
@@ -138,19 +140,19 @@ captures/
 trained_models/           #   fingerprint_{cvnn,cnn1d,freqcvnn}.pt — place at repo root (§3.3)  ~4 MB
 ```
 
-The raw OTA capture sessions (Tier 3, ~90 GB of `rx_*.bin`) are provenance for byte-level audit and are
-**available from the authors on request**; they are not in the minimal bundle.
+The raw OTA capture sessions (Tier 3; ~90 GB of `rx_*.bin`) serve as provenance for byte-level audit.
+They are **available from the authors on request** and are not included in the minimal bundle.
 
-**Setting the location.** Every script reads the captures root from the `CAPTURES_ROOT` environment
-variable, defaulting to `~/captures`. Point it at wherever you unpacked the bundle:
+**Capture location.** Each script reads the capture root from the `CAPTURES_ROOT` environment
+variable, which defaults to `~/captures`. Set it to the directory into which the bundle was unpacked:
 ```bash
 export CAPTURES_ROOT=/path/to/captures
 ```
-Then create the models folder and copy the three `.pt` (§3.3) into it:
+Then create the models directory and copy the three `.pt` checkpoints (§3.3) into it:
 ```bash
 mkdir -p trained_models && cp /path/to/bundle/models/*.pt trained_models/
 ```
-(scripts take `--model trained_models/fingerprint_cvnn.pt`). The folder is not in the repo — you create it.
+(scripts accept `--model trained_models/fingerprint_cvnn.pt`). This directory is not part of the repository and must be created.
 
 ### 3.1 Enrollment dataset — `${CAPTURES_ROOT}/enrollment/`
 
@@ -175,11 +177,11 @@ mkdir -p trained_models && cp /path/to/bundle/models/*.pt trained_models/
 
 ### 3.2 Attack data — `${CAPTURES_ROOT}/attack_*/` (Tier 3, provenance)
 
-These are the **raw OTA capture sessions** — needed only to re-score the over-the-air results from the
-raw `rx_*.bin` recordings (Tier 3) or re-transmit them (Tier 4). The **derived result CSVs the figures
-actually read ship in `docs/`** (Tier 1), so you do *not* need these dirs to regenerate any figure. The
-only part in the minimal bundle is `attack_assets/`'s small TX waveforms (`ch0_run3_107.bin`,
-`ch1_e04_s1.bin`). The role-based dirs:
+These directories hold the **raw OTA capture sessions**. They are needed only to re-score the
+over-the-air results from the raw `rx_*.bin` recordings (Tier 3) or to retransmit them (Tier 4). The
+derived result CSVs that the figures read are shipped under `docs/` (Tier 1), so these directories are
+not required to regenerate any figure. Only the small TX waveforms in `attack_assets/`
+(`ch0_run3_107.bin`, `ch1_e04_s1.bin`) are included in the minimal bundle. The role-based directories:
 
 | Directory | Role | Key contents |
 |---|---|---|
@@ -195,12 +197,12 @@ per-block fingerprint scores · `ber_*.csv` = decode BER · `*.sh` = run driver.
 
 ### 3.3 Trained models — `*.pt` (download into `trained_models/`)
 
-**Models are optional** (Tier 1 needs none). The `.pt` are used only to recompute from the classifier
-(§2C, §6–§7), and even then §6.2 retrains an equivalent model from the raw enrollment — the shipped
-checkpoints just skip retraining and give bit-exact reproduction.
+The trained models are optional; Tier 1 does not require them. The `.pt` checkpoints are used only to
+recompute results from the classifier (§2C, §6–§7), and §6.2 retrains an equivalent model from the raw
+enrollment in any case. The supplied checkpoints simply avoid retraining and give bit-exact reproduction.
 
 Three checkpoints, one per architecture, all scoring `WIN=1024` complex windows over 5 classes
-(`device_1…5`). Download them into the repo root only if you need the recompute path:
+(`device_1…5`). Place them in the repository root only if the recompute path is required:
 
 | Model | Size | Arch | Role |
 |---|---|---|---|
@@ -249,30 +251,31 @@ AdRadio/                                # WiSec 2027 artifact (code only)
 │
 ├── plots/          # ALL figure/graph generators (self-locating; run from anywhere)
 │   ├── plot_exp{1,2,3}_*.py  plot_tables.py          # Exp 1/2/3 paper figures + result tables
-│   ├── fig1_col.py  fig2_check.py  fig3_check.py  make_a3_plot.py  # Exp 4 (4.1, 4.2, 4.3)
-│   ├── figB1.py  figB2.py  # Exp 5 (5.1, 5.2)
+│   ├── make_a1_compare.py  make_cnn1d_fooling_plot.py  make_transfer_plot.py
+│   │   make_ota_multimodel_plot.py  make_a3_plot.py  # Exp 4 (A1–A4)
+│   ├── make_b1_combined_cvnn.py  make_pwr_fool_ber.py  make_b2_matched_vs_unmatched.py  # Exp 5 (B1, B2)
 │   └── make_results_workbook_byexp.py               # -> docs/…xlsx master index
 │
 └── docs/           # all result CSVs, rendered figures, workbooks, and write-ups
 ```
 
-**Running scripts from the new layout.** Every entry script self-locates the repo root (the
-directory holding `.git`), adds `lib/` to `sys.path`, and resolves `docs/` and the `.pt` models
-relative to that root — so a script runs correctly **from any working directory**
-(e.g. `python3 plots/figB1.py` or `python3 experiment_1/exp1_reachability.py`).
+**Running scripts.** Each entry script locates the repository root (the directory containing `.git`),
+adds `lib/` to `sys.path`, and resolves `docs/` and the `.pt` models relative to that root. A script
+therefore runs correctly **from any working directory**
+(for example, `python3 plots/make_b1_combined_cvnn.py` or `python3 experiment_1/exp1_reachability.py`).
 The shared OTA runners (`experiment_3/campaign.sh`, `experiment_2/run_sc.sh`) reference each other
-by repo-relative path, so the Experiment 2/3 campaigns work across the folder split.
+by repository-relative path, so the Experiment 2 and 3 campaigns operate across the directory split.
 
-**Hosted externally, not in git (§3):** the ~19 GB recompute bundle (enrollment + models) and the raw
+**Hosted externally (not in git; §3):** the ~19 GB recompute bundle (enrollment and models) and the raw
 OTA capture sessions (provenance).
 
 **Required separately for OTA (§5):** the `gr-foo` and `gr-ieee802-11` GNU Radio 3.10 OOT modules, built
 and installed. They are **not** vendored here; the `training/flowgraphs/` scripts import the installed
 `ieee802_11` module.
 
-**Navigating.** The canonical reproducible path is the §6 pipeline; the single authoritative data
-index is `docs/exp3_all_results_byexp.xlsx`. Superseded/dated snapshots from the development repo were
-**not** carried into this artifact.
+**Navigation.** The canonical reproducible path is the §6 pipeline, and the authoritative data
+index is `docs/exp3_all_results_byexp.xlsx`. Superseded and dated snapshots from the development
+repository were **not** carried into this artifact.
 
 ---
 
@@ -283,19 +286,20 @@ index is `docs/exp3_all_results_byexp.xlsx`. Superseded/dated snapshots from the
 ```bash
 pip install -r requirements.txt     # numpy, scipy, matplotlib, scikit-learn, torch
 ```
-For GPU training install the CUDA build of `torch` from https://pytorch.org/. Everything except OTA
-capture (Experiment 1, all scoring, all figure regeneration) needs only Python + PyTorch — no GNU Radio.
+For GPU training, install the CUDA build of `torch` from https://pytorch.org/. Every step except OTA
+capture — Experiment 1, all scoring, and all figure regeneration — requires only Python and PyTorch,
+not GNU Radio.
 
-**Capture / OTA only (Experiments 2–3 and enrollment):** GNU Radio 3.10 + UHD, with the `gr-foo` and
-`gr-ieee802-11` OOT modules **built and installed** (they are not vendored in this repo — obtain
-`gr-ieee802-11` from `<anonymized-fork-url>` (our fork; link withheld for double-blind review) and `gr-foo` from its upstream, both on
-the `maint-3.10` branch):
+**Capture and OTA only (Experiments 2–3 and enrollment).** These steps require GNU Radio 3.10 and UHD,
+with the `gr-foo` and `gr-ieee802-11` OOT modules **built and installed**. These modules are not
+vendored here: obtain `gr-ieee802-11` from `<anonymized-fork-url>` (our fork; link withheld for
+double-blind review) and `gr-foo` from its upstream, both on the `maint-3.10` branch:
 ```bash
 cd gr-foo && mkdir build && cd build && cmake .. && make && sudo make install && sudo ldconfig
 cd ../../gr-ieee802-11 && mkdir build && cd build && cmake .. && make && sudo make install && sudo ldconfig
 ```
-(`gr-foo` first.) Python modules `gnuradio`, `ieee802_11`, `pmt` come from this system install, not pip.
-The `flowgraphs/` scripts import `ieee802_11`.
+Build `gr-foo` first. The Python modules `gnuradio`, `ieee802_11`, and `pmt` come from this system
+installation rather than pip; the `flowgraphs/` scripts import `ieee802_11`.
 
 ### Our hardware testbed (Experiments 2–3)
 
@@ -306,50 +310,50 @@ The `flowgraphs/` scripts import `ieee802_11`.
 - **Other enrolled devices** — B200mini/B205mini (`device_1 3263606`, `device_2 32593C4`,
   `device_3 3259376`, `device_4 3259368`), swapped one at a time into TX/RX; these are the
   classifier's other legitimate classes = the impersonation *targets*, not attackers.
-- **Receiver** — b205mini, **`rx_gain = 0.93` everywhere** — a mismatch makes the *unperturbed* victim misclassify and turns every fool% into a baseline artifact; the §6.5 gate catches it.
+- **Receiver** — B205mini, with `rx_gain = 0.93` throughout. A gain mismatch causes the *unperturbed* victim to misclassify, turning every fooling rate into a baseline artifact; the §6.5 gate detects this condition.
 
 ### Re-running from scratch on your own hardware (Tier 4)
 
-You do **not** need our exact radios — the serials/IPs above are only what we used. To repeat the full
-pipeline on a different SDR testbed you need, by **role**:
+The exact radios are not required; the serial numbers and IP addresses above record only the hardware we
+used. Reproducing the full pipeline on a different SDR testbed requires the following roles:
 
-- **≥ 5 distinct transmitters** — one is the **victim**, the other four are the enrolled impersonation
-  **targets** (any SDRs with stable, distinguishable hardware impairments; we used N-series + B20x-mini
-  USRPs). They go through the TX chain one at a time during enrollment.
-- **One adversary transmitter** (for two-channel Experiment 3) that is **clock/PPS-locked to the
-  victim** — a shared 10 MHz reference + PPS so the two streams are phase-coherent (we MIMO-cabled two
-  N-series; any UHD radios that can share a reference work).
+- **At least five distinct transmitters:** one victim and four enrolled impersonation **targets**. Any
+  SDRs with stable, distinguishable hardware impairments are suitable; we used N-series and B20x-mini
+  USRPs. Each passes through the TX chain individually during enrollment.
+- **One adversary transmitter** for the two-channel Experiment 3, clock- and PPS-locked to the victim.
+  A shared 10 MHz reference and PPS keep the two streams phase-coherent; we MIMO-cabled two N-series
+  radios, but any UHD radios that can share a reference are suitable.
 - **One receiver.**
 
-All radios run through **UHD + GNU Radio 3.10** (USRP family). Match these settings so results are comparable:
+All radios operate through **UHD and GNU Radio 3.10** (USRP family). Match the following settings for comparable results:
 
 | setting | value |
 |---|---|
 | center frequency | **5.29 GHz** |
 | sample rate | **5 MS/s** |
 | modulation | 802.11a/g **BPSK, rate 1/2** |
-| RX gain | **fixed** (we used 0.93; yours may differ), identical for enrollment and attack |
+| RX gain | **fixed** (we used 0.93; the value may differ on other hardware), identical for enrollment and attack |
 | TX gain | **calibrated per device** to a common target RX level (via `enroll_calib.py`) |
 
-Then follow **§6 end-to-end**: enroll (clean runs per device), then train (§6.2), validate (§6.3), build
+Then follow **§6** end to end: enroll (clean runs per device), train (§6.2), validate (§6.3), build
 the victim replay (§6.4), pass the silent-adversary gate (§6.5), craft the δ banks (§6.6), and run the OTA
-campaigns (§7, `run_sc.sh` / `run_2ch.sh`).
+campaigns (§7, via `run_sc.sh` and `run_2ch.sh`).
 
-> **Expect different absolute numbers.** A device fingerprint is specific to the *physical radios*, so
-> your classifier, its clean accuracy, and the exact PSR / fool% crossings **will differ** from ours —
-> you train a new model on *your* hardware, not load ours. What reproduces is the **qualitative result**:
-> a low-power adversary fools the OTA classifier while the 802.11 link still decodes. The most common
-> pitfall is an **uncalibrated gain** that makes the *clean* victim misclassify — the §6.5 gate catches
-> it in ~60 s.
+> **Absolute numbers will differ.** A device fingerprint is specific to the physical radios, so the
+> classifier, its clean accuracy, and the exact PSR and fooling-rate crossings **will differ** from
+> ours; the model is trained on your hardware rather than loaded from ours. What reproduces is the
+> **qualitative result**: a low-power adversary fools the OTA classifier while the 802.11 link continues
+> to decode. The most common pitfall is an **uncalibrated gain** that causes the clean victim to
+> misclassify, which the §6.5 gate detects in roughly 60 s.
 
 ---
 
 ## 6. Capture-to-attack pipeline (step by step)
 
-Values in `<angle brackets>` are yours to fill: `<N>` number of
+Values in `<angle brackets>` must be supplied: `<N>` the number of
 detected victim frames, `<scale>` from §6.5, `<victim>` the
 victim label (e.g. `device_5`), `<V>` its 1-based class index (e.g. `5`), `<target>` the class to
-impersonate, `<K>` the target's 1-based index.
+impersonate, and `<K>` the target's 1-based index.
 
 | Stage | Script | Radio | § |
 |---|---|---|---|
@@ -364,8 +368,8 @@ impersonate, `<K>` the target's 1-based index.
 | Experiment&nbsp;3:&nbsp;Type&nbsp;III&nbsp;Adversary&nbsp;| `experiment_3/run_2ch.sh` / `campaign.sh ch2_*` | yes | 7 |
 
 ### 6.1 Collect enrollment — `training/flowgraphs/enroll_calib.py`
-Bring a TX radio up once, calibrate its gain to a target RX level, capture 3 clean runs/device via the
-per-device wrappers (one radio init per run — the pattern that works).
+Bring up one TX radio, calibrate its gain to a target RX level, and capture three clean runs per device
+using the per-device wrappers (one radio initialization per run).
 Produces `$CAPTURES_ROOT/enrollment/device_N/clean_run_{1,2,3}.bin` (+ sidecars).
 Key args: `--device-id N` (1–5), `--run-id`, `--tx-serial` (serial= for the B200/B205 radios, IP for the usrp2
 victim), `--tx-antenna` (`TX/RX` or `J1`), `--target-db` (use **−30**), `--fix-gain` (victim only:
@@ -375,11 +379,12 @@ cd training/flowgraphs
 # edit each wrapper: attacker devices --target-db -30 --g0 <start>, drop --fix-gain; victim keeps --fix-gain 0.3689
 bash enroll_d1_runs.sh    # then swap radio, enroll_d2_runs.sh, d3, d4, d5
 ```
-Each run ≈ 1 GB, 100+ frames, `bad_packet=no`, within tolerance of −30 dB.
+Each run is approximately 1 GB and contains 100 or more frames, with `bad_packet=no` and the level within tolerance of −30 dB.
 
 ### 6.2 Train — `training/train_fingerprint.py`
-**Refit every session** — a reused prior-day model fails on a re-leveled enrollment. Needs a `_5dev`
-symlink tree (`device_N` linking to `device_N`, **clean_run only**). Produces `fingerprint_<tag>.pt`.
+**Retrain every session:** a model reused from a previous day fails on a re-leveled enrollment. Training
+requires a `_5dev` symlink tree (`device_N` linking to `device_N`, clean runs only) and produces
+`fingerprint_<tag>.pt`.
 Args: `--root`, `--val-run` (3), `--epochs` (use **80**),
 `--tag`, `--lr`, `--cfo-correct`, `--rebuild`.
 ```bash
@@ -392,13 +397,13 @@ python3 training/train_fingerprint.py --val-run 3 --epochs 80 --root "$TRN" --ta
 ```
 
 ### 6.3 Validate — `training/validation_confusion.py`
-Held-out run-3 per-device accuracy + confusion (leakage-safe). Want **victim = 100%** and the target class strong; overall frame-level **95.98%**.
+Per-device accuracy and confusion on the held-out run 3 (leakage-safe). The victim class should reach **100%** and the target class should be strong; the overall frame-level accuracy is **95.98%**.
 ```bash
 python3 training/validation_confusion.py --model trained_models/fingerprint_cvnn.pt --base "$ENR"
 ```
 
 ### 6.4 Build the victim replay `ch0`
-A clean baseband replay reproducing the victim frame-for-frame (base for crafting *and* the Experiment 2/3 ch0).
+A clean baseband replay that reproduces the victim frame for frame; it is the basis for both crafting and the Experiment 2/3 ch0.
 ```bash
 A=$CAPTURES_ROOT/attack_assets; mkdir -p "$A"; VIC="$ENR/<victim>"
 python3 experiment_3/exp3_map_detected_ids.py --capture $VIC/clean_run_3.bin --rx-frames $VIC/rx_frames_run_3.jsonl \
@@ -406,11 +411,11 @@ python3 experiment_3/exp3_map_detected_ids.py --capture $VIC/clean_run_3.bin --r
 python3 experiment_3/build_ch0_matched.py --dev-dir $VIC --run 3 --ids $A/detected_ids_run3.csv \
     --period 65661 --out $A/ch0_run3_<N>.bin        # N = number of detected frames; 65661 samples = frame spacing in the replay
 ```
-`--thr-mult 2.0` **must match** §6.6 so δ[k] ↔ ch0 frame k.
+`--thr-mult 2.0` **must match** §6.6 so that δ[k] corresponds to ch0 frame k.
 
 ### 6.5 Silent-adversary gate — `experiment_3/run_2ch.py` + `experiment_3/score_2ch.py`
-Prove the unperturbed victim replay reads **the victim class** through today's testbed before trusting any
-campaign. Transmit ch0 + a zeros ch1 and score.
+Confirm that the unperturbed victim replay is classified as **the victim class** on the current testbed
+before running any campaign. Transmit ch0 together with a zero-valued ch1 and score the result.
 ```bash
 python3 - <<'PY'   # zeros ch1 + 1-row block map
 import numpy as np
@@ -423,16 +428,17 @@ python3 experiment_3/run_2ch.py --ch0 $A/ch0_run3_<N>.bin --ch1 $A/ch1_zeros.bin
 python3 experiment_3/score_2ch.py --capture $A/rx_control.bin --blocks $A/blk_control.csv --ch0 $A/ch0_run3_<N>.bin \
     --model trained_models/fingerprint_cvnn.pt --victim <victim> --select fool --ber --guard-frac 0 --out $A/score_control.csv
 ```
-**Pass = landed the victim class, fool 0%, BER 0.** Else fix the testbed (usually rx-gain). Then compute
-**SCALE** = `ch0_active_rms / received_active_rms` (δ is crafted at received amplitude; the build
-re-scales it to TX level). Measure both RMS values over the payload samples only; the comment above
-`SCALE` in `experiment_3/campaign.sh` documents the measurement. SCALE is session-specific, so re-measure it
-every session. Use it as
+A pass requires the victim class to land with a **0% fooling rate** and **0 BER**; otherwise, correct
+the testbed (usually the RX gain). Then compute **SCALE** = `ch0_active_rms / received_active_rms` (δ is
+crafted at the received amplitude, and the build rescales it to the TX level). Measure both RMS values
+over the payload samples only; the comment above `SCALE` in `experiment_3/campaign.sh` documents the
+measurement. SCALE is session-specific and must be re-measured each session. Use it as
 `<scale>` for Experiment 2 (we measured **11.7**; two-channel Experiment 3 uses `SCALE=1`).
 
 ### 6.6 Craft δ banks — `experiment_3/exp3_make_ota_perturbations.py`
-Optimize δ against the **received** victim, payload-only, MAC header masked. Produces a bank dir of
-compact `.npy` deltas `(N, 13312)` + `manifest.csv`, one per method×ε.
+Optimize δ against the **received** victim, over the payload only and with the MAC header masked. This
+produces a bank directory of compact `.npy` deltas of shape `(N, 13312)` and a `manifest.csv`, one per
+method and ε.
 Args: `--model`, `--ch0` (= the **received** capture), `--from-capture`, `--thr-mult 2.0` (match §6.4),
 `--nper <N>`, `--mask-lead 780`, `--tgt-dst <K>` (target 1-based index) **or** `--untargeted`,
 `--victim-class <V>`, `--methods` (default 6: `fgsm bim mim pgd_a0.01 pgd_a0.05 pgd_a0.10`), `--epsilons`.
@@ -453,9 +459,9 @@ python3 experiment_3/exp3_make_ota_perturbations.py $COMMON --untargeted  --epsi
 
 ## 7. Experiment catalog
 
-Each experiment below lists its one-line goal, how to reproduce it, the result data, and the figure it
-produces. Shared setup (model + enrollment + δ banks) comes from §6. The master data index for every
-experiment is `docs/exp3_all_results_byexp.xlsx`.
+Each experiment below lists its objective, the reproduction command, the result data, and the figure it
+produces. The shared setup (model, enrollment, and δ banks) is described in §6, and the master data
+index for all experiments is `docs/exp3_all_results_byexp.xlsx`.
 
 ### Experiment 1 (Type I Baseline) — Classifier reachability (no radio)
 ```bash
@@ -479,7 +485,7 @@ cd experiment_2 && ./run_sc.sh        # both single-channel arms (calls ../exper
 Output `$A/score_sc_{tgt_d1,unt}_r<RUN>_<method>.csv`. Figure: `plots/make_sc_vs_2ch_plot.py`.
 
 ### Experiment 3 (Type III Adversary) — `campaign.sh ch2_tgt_d1 | ch2_unt`
-Victim replay on ch0, δ on ch1, MIMO-locked, masked 16-pt grid, **SCALE=1**. The Qt GUI shows per method.
+Victim replay on ch0, δ on ch1, MIMO-locked, over the masked 16-point grid, with **`SCALE=1`**. The Qt GUI displays progress per method.
 ```bash
 export A=$CAPTURES_ROOT/attack_assets; export CH0=$A/ch0_run3_<N>.bin
 export MODEL=trained_models/fingerprint_cvnn.pt KEEP_CAPTURES=0 GUARD_FRAC=0 BER_PASSES=1 SECS_2CH=150 \
@@ -493,40 +499,41 @@ frame rejections) are rendered from embedded data by `plots/plot_exp3_sidebyside
 `plots/plot_exp3_rejection.py`.
 
 ### Experiment 4 — Robustness against authentication-model variations
-Does the fragility depend on the classifier? Four variations (Exp 4.4 is a table). Crafting as in §6.
+These four variations test whether the vulnerability depends on the classifier (Exp 4.4 is a table). Crafting follows §6.
 
-- **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real CNN1D baseline (`lib/cnn1d.py`), run its
-  reachability, compare to CVNN. Data: `reachability_matrix_cnn1d.csv`, `docs/a1_*_ota_ber.csv`,
-  `docs/a1cvnn_*_ota_ber.csv` (aggregated into the workbook). Figure: `plots/fig1_col.py` produces `varA1_cnn1d_vs_cvnn_col.*`.
+- **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real-valued CNN1D baseline (`lib/cnn1d.py`), compute its
+  reachability, and compare it with the CVNN. Data: `reachability_matrix_cnn1d.csv`, `docs/a1_*_ota_ber.csv`,
+  `docs/a1cvnn_*_ota_ber.csv`. Figures: `plots/make_a1_compare.py` produces `docs/a1_cnn1d_vs_cvnn.*`,
+  `plots/make_cnn1d_fooling_plot.py`.
 - **Exp 4.2 — transfer across models.** δ crafted on CVNN applied to CNN1D and the physics SVM/RF.
   `experiment_4/exp3_transfer_cnn1d_cvnn.py`. Data: `exp3_transfer_cnn1d_cvnn.{csv,npz}`,
-  `exp3_ota_multimodel.csv`. Figures: `plots/fig2_check.py` (varA2 digital), `plots/fig3_check.py` (varA2 OTA).
+  `exp3_ota_multimodel.csv`. Figures: `plots/make_transfer_plot.py`, `plots/make_ota_multimodel_plot.py`.
   (Workbook sheets `A2-ML`, `A2-transfer-raw`.)
-- **Exp 4.3 — explicit physical features (SVM/RF).** Feature-explicit classifier on explicit impairment features.
+- **Exp 4.3 — explicit physical features (SVM/RF).** A classifier trained on explicit impairment features.
   `experiment_4/exp3_a3_feature_model.py`. Data: `exp3_a3_feature_model.{csv,npz}`. Figure:
   `plots/make_a3_plot.py` produces `docs/a3_feature_model_robustness.*`.
 - **Exp 4.4 — spectral representation (frequency-domain CVNN).** FFT-first classifier (`lib/freqcvnn.py`); representation-invariance
   of the fragility, **reported as a table** (no figure). Data: `reachability_matrix_freqcvnn.csv`.
 
 ### Experiment 5 — Adversary realism variations
-Both run through the Experiment 3 two-channel pipeline (§6); no dedicated scripts.
+Both variations run through the Experiment 3 two-channel pipeline (§6); neither has dedicated scripts.
 
-- **Exp 5.1 — perturbation power.** Two-channel fooling, target rate, and BER vs adversary gain and
-  measured received PSR (ε=0.01); distance-ratio reach. Runs on `$CAPTURES_ROOT/attack_b1`. Data:
+- **Exp 5.1 — perturbation power.** Two-channel fooling rate, target rate, and BER versus adversary gain
+  and measured received PSR (ε = 0.01), with the distance-ratio reach. Runs on `$CAPTURES_ROOT/attack_b1`. Data:
   `docs/b1_cvnn_foolber_<method>.csv` (untargeted), `docs/b1_cvnn_tgt_d3_foolber_<method>.csv`
-  (targeted device_3). Figure: `plots/figB1.py` (varB1 power sweep).
-- **Exp 5.2 — one perturbation for every frame.** Per-frame matched δ vs one universal waveform reused on every frame
+  (targeted device_3). Figures: `plots/make_b1_combined_cvnn.py`, `plots/make_pwr_fool_ber.py`.
+- **Exp 5.2 — one perturbation for every frame.** Per-frame matched δ versus a single universal waveform reused on every frame
   (the realizable adversary). Data: `docs/b2_matched_vs_unmatched.csv`. Figure:
-  `plots/figB2.py` produces `varB2_matched_vs_universal.*`.
+  `plots/make_b2_matched_vs_unmatched.py` produces `docs/b2_matched_vs_unmatched.*`.
 
 ---
 
 ## 8. Regenerating every figure, table, and workbook
 
-All figure scripts live in `plots/` and are self-locating (run from any directory). The `plot_exp*`
-scripts carry embedded data; the `make_*` scripts read the shipped `docs/*.csv`. Each writes `.png` +
-`.svg` (several also `.pdf`) under `docs/` (the `plot_*` scripts default to `plots/output/`, overridable
-with `FIG_OUT`).
+All figure scripts reside in `plots/` and locate the repository root automatically, so they run from any
+directory. The `plot_exp*` scripts carry embedded data; the `make_*` scripts read the CSVs under
+`docs/`. Each writes `.png` and `.svg` (several also `.pdf`) under `docs/`; the `plot_*` scripts default
+to `plots/output/`, which `FIG_OUT` overrides.
 
 **Master workbook (run first — the data index):**
 `plots/make_results_workbook_byexp.py` produces `docs/exp3_all_results_byexp.xlsx` (sheets A1-ML, A2-ML,
@@ -538,19 +545,21 @@ A2-transfer-raw, A3-ML, A4-ML, B1-W, B2-W).
 `plots/plot_exp3_targeted.py` (Exp 3) · `plots/plot_tables.py` (result tables). Supporting:
 `plots/make_e1_diagram.py`, `plots/make_digital_vs_ota.py`, `plots/make_sc_vs_2ch_plot.py`.
 
-**Experiment 4 (Exp 4.1–4.4):** `plots/fig1_col.py` (Exp 4.1) · `plots/fig2_check.py`, `plots/fig3_check.py` (Exp 4.2) · `plots/make_a3_plot.py` (Exp 4.3).
+**Experiment 4 (Exp 4.1–4.4):** `plots/make_a1_compare.py`, `plots/make_cnn1d_fooling_plot.py` (Exp 4.1) ·
+`plots/make_transfer_plot.py`, `plots/make_ota_multimodel_plot.py` (Exp 4.2) · `plots/make_a3_plot.py` (Exp 4.3).
 Exp 4.4 is reported as a table.
 
-**Experiment 5 (Exp 5.1, 5.2):** `plots/figB1.py` (Exp 5.1) · `plots/figB2.py` (Exp 5.2).
+**Experiment 5 (Exp 5.1, 5.2):** `plots/make_b1_combined_cvnn.py`, `plots/make_pwr_fool_ber.py` (Exp 5.1) ·
+`plots/make_b2_matched_vs_unmatched.py` (Exp 5.2).
 
 Regenerate everything:
 ```bash
-for f in make_results_workbook_byexp \
-         plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp2_sidebyside \
+for f in plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp2_sidebyside \
          plot_exp3_sidebyside plot_exp3_rejection plot_tables \
          make_e1_diagram make_digital_vs_ota make_sc_vs_2ch_plot \
-         fig1_col fig2_check fig3_check make_a3_plot \
-         figB1 figB2; do
+         make_a1_compare make_cnn1d_fooling_plot make_transfer_plot make_ota_multimodel_plot make_a3_plot \
+         make_b1_combined_cvnn make_pwr_fool_ber make_b2_matched_vs_unmatched \
+         make_results_workbook_byexp; do
   echo "== $f =="; python3 "plots/$f.py" || echo "  (check inputs for $f)"
 done
 ```
