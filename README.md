@@ -43,6 +43,9 @@ The five experiments fall into two groups. Experiments 1–3 vary how the pertur
 receiver, in order of increasing physical realism. Experiments 4–5 vary the classifier under attack and
 the realism of the adversary.
 
+> **Review scope:** for this submission the dataset is not yet released, so only **Tier 1** is runnable — the
+> figures, tables, workbook, and Type I reachability, all from the repository with no download (§3).
+
 | Experiment 1-3 | One-line finding | Radio? | δ scaling |
 |---|---|---|---|
 | **Exp 1: Type I Baseline** | Receiver-side perturbation of I/Q frames readily fools the classifier, but the BER rises sharply, making the attack easy to detect — a software upper bound | no | — |
@@ -118,10 +121,15 @@ result.
 
 | Tier | Reproduces | Data to download | Size |
 |---|---|---|---|
-| **1 Results** | every figure, table, and the workbook | **nothing** — the `docs/*.csv` shipped in this repo, from which the `plots/` scripts regenerate the figures | **0** |
-| **2 Recompute** | Experiment 1 reachability, Experiment 4, retraining, feature-domain crafting (no radios) | the **minimal bundle** below | **~19&nbsp;GB** |
+| **1 Results** | every figure, table, and the workbook, plus **Experiment 1 (Type I) reachability** | **nothing** — the `docs/*.csv`, the CVNN model, and `docs/reachability_sample.npz`, all shipped in this repo | **0** |
+| **2 Recompute** | Experiment 4, retraining, feature-domain crafting, and reachability on the full enrollment (no radios) | the **minimal bundle** below | **~19&nbsp;GB** |
 | **3 Rescore&nbsp;raw&nbsp;OTA** | OTA fool%/BER from the raw `rx_*.bin` recordings (no radios) | the full attack capture dirs (on request, §3.2) | ~90&nbsp;GB |
 | **4 Re-run OTA** | the whole pipeline | everything **+ the radios (§5)** | — |
+
+> ⚠️ **For this submission, only Tier 1 is runnable.** The dataset bundle is not distributed yet (below), so
+> Tiers 2–4 cannot be exercised during review. Everything reported — every figure, table, the workbook, and
+> **Type I (reachability)** — reproduces under **Tier 1** from the repository alone, with no download. The
+> data link will be added later to unlock Tiers 2–4.
 
 In summary, cloning the repository and running the scripts reproduces every reported result. The
 datasets are required only to recompute results from scratch.
