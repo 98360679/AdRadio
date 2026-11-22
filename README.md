@@ -14,11 +14,11 @@ experiments, and the commands required to reproduce each result and figure. The 
 flowgraphs. Datasets and trained models are hosted externally and are organized into the reproduction
 tiers described in **§3**.
 
-> **Reproducing without SDR hardware.** Tiers 1–3 require no radios, because the over-the-air signals are supplied as recordings:
-> - **Tier 1** regenerates every figure and table from the CSVs under `docs/` (Python only; no download).
-> - **Tiers 2–3** recompute the reachability, model-variation, and validation results, and re-score the OTA fooling-rate and BER metrics by running the classifier on the supplied `.bin` recordings.
+> **Reproducing without SDR hardware.** The artifact is designed so Tiers 1–3 need no radios (OTA signals are provided as recordings):
+> - **Tier 1** regenerates every figure, table, and the workbook from the data under `docs/`, and runs **Type I reachability** on the shipped CVNN model and window sample — Python only, no download.
+> - **Tiers 2–3** recompute the model-variation and validation results, and re-score the OTA fooling-rate and BER metrics by running the classifier on the supplied `.bin` recordings.
 >
-> Only **Tier 4** (collecting new transmissions) requires the testbed (§5). Trained models are supplied, and every script runs on CPU; a GPU is optional. The tier table appears in §3.
+> Only **Tier 4** (collecting new transmissions) requires the testbed (§5). **For this submission the dataset bundle is not yet released, so only Tier 1 can be run** (§3); the link that unlocks Tiers 2–4 will be added later. Every script runs on CPU; a GPU is optional. The tier table appears in §3.
 
 
 ---
