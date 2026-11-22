@@ -109,6 +109,19 @@ This uses `trained_models/fingerprint_cvnn.pt` and `docs/reachability_sample.npz
 device the shipped `reachability_matrix.csv` was computed from, so it reproduces that matrix exactly. To run
 on the full enrollment instead, set `CAPTURES_ROOT` to the bundle (§3) and add `--base $CAPTURES_ROOT/enrollment`.
 
+**D. Regenerate every figure, table, and the workbook** in one pass — the complete Tier 1 output, no download:
+```bash
+for f in make_results_workbook_byexp \
+         plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp1_singlecol plot_exp2_sidebyside \
+         plot_exp3_sidebyside plot_exp3_rejection plot_exp3_untargeted plot_exp3_targeted plot_tables \
+         make_e1_diagram make_digital_vs_ota make_sc_vs_2ch_plot \
+         fig1_col fig2_check fig3_check make_a3_plot \
+         figB1 figB2; do
+  echo "== $f =="; python3 "plots/$f.py" || echo "  (check inputs for $f)"
+done
+```
+This is the same loop as §8, which adds per-experiment detail on what each script produces.
+
 Full reproduction from raw captures (capture, train, craft, transmit, score) is described in §6;
 per-experiment reproduction is described in §7.
 
