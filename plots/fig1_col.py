@@ -19,7 +19,7 @@ def block(start):
     return df
 
 cnn, cvnn = block(595), block(695)
-BITS_PER_FRAME = 2000          # from smallest observed BER 1/214000 over 107 frames
+BITS_PER_FRAME = 4000          # 500-byte MSDU = 4000 bits/frame (matches exp3_ber_eval PDU_LENGTH, §9)
 
 styles = {
  'fgsm':      dict(color='#1f77b4', marker='o', ls='-',   label='FGSM'),

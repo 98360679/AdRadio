@@ -261,7 +261,7 @@ AdRadio/                                # WiSec 2027 artifact (code only)
 └── docs/           # all result CSVs, rendered figures, workbooks, and write-ups
 ```
 
-**Running scripts.** Each entry script locates the repository root (the directory containing `.git`),
+**Running scripts.** Each entry script locates the repository root (the directory containing `lib/`),
 adds `lib/` to `sys.path`, and resolves `docs/` and the `.pt` models relative to that root. A script
 therefore runs correctly **from any working directory**
 (for example, `python3 plots/figB1.py` or `python3 experiment_1/exp1_reachability.py`).
@@ -381,7 +381,7 @@ cd training/flowgraphs
 # edit each wrapper: attacker devices --target-db -30 --g0 <start>, drop --fix-gain; victim keeps --fix-gain 0.3689
 bash enroll_d1_runs.sh    # then swap radio, enroll_d2_runs.sh, d3, d4, d5
 ```
-Each run is approximately 1 GB and contains 100 or more frames, with `bad_packet=no` and the level within tolerance of −30 dB.
+Each run is approximately 1.2 GB and contains 100 or more frames, with `bad_packet=no` and the level within tolerance of −30 dB.
 
 ### 6.2 Train — `training/train_fingerprint.py`
 **Retrain every session:** a model reused from a previous day fails on a re-leveled enrollment. Training
@@ -435,7 +435,7 @@ the testbed (usually the RX gain). Then compute **SCALE** = `ch0_active_rms / re
 crafted at the received amplitude, and the build rescales it to the TX level). Measure both RMS values
 over the payload samples only; the comment above `SCALE` in `experiment_3/campaign.sh` documents the
 measurement. SCALE is session-specific and must be re-measured each session. Use it as
-`<scale>` for Experiment 2 (we measured **11.7**; two-channel Experiment 3 uses `SCALE=1`).
+`<scale>` for Experiment 2 (our runs measured ≈**11.7**; `experiment_3/campaign.sh` defaults to `SCALE=8.7625` only if it is unset). Two-channel Experiment 3 uses `SCALE=1`.
 
 ### 6.6 Craft δ banks — `experiment_3/exp3_make_ota_perturbations.py`
 Optimize δ against the **received** victim, over the payload only and with the MAC header masked. This
@@ -469,8 +469,7 @@ index for all experiments is `docs/exp3_all_results_byexp.xlsx`.
 ```bash
 python3 experiment_1/exp1_reachability.py --model trained_models/fingerprint_cvnn.pt --base "$ENR" --out reachability.csv
 ```
-Data: `reachability_matrix.csv`, `reachability_shortfall_curves.{npz,csv}`,
-`exp3_eps_phys_empirical.{csv,npz}`, `reachability_cvnn.csv`. Figures: `plots/make_e1_diagram.py`,
+Data: `reachability_matrix.csv`, `reachability_cvnn.csv`. Figures: `plots/make_e1_diagram.py`,
 `plots/make_digital_vs_ota.py`. Produces the reachability table.
 
 ### Experiment 2 (Type II Adversary) — `campaign.sh sc_tgt_d1 | sc_unt`
@@ -480,11 +479,12 @@ Data: `reachability_matrix.csv`, `reachability_shortfall_curves.{npz,csv}`,
 export A=$CAPTURES_ROOT/attack_assets; export CH0=$A/ch0_run3_<N>.bin
 FINE=$(python3 -c "print(','.join(f'{round(0.1+0.01*i,2):g}' for i in range(41)))")
 export MODEL=trained_models/fingerprint_cvnn.pt KEEP_CAPTURES=0 GUARD_FRAC=0 BER_PASSES=1 \
-       PASSES_SC=2 SECS_SC=130 SCALE=<scale> METHODS="fgsm bim mim pgd_a0.01 pgd_a0.05 pgd_a0.10" EPS_GRID="$FINE"
+       PASSES_SC=2 SECS_SC=200 SCALE=<scale> METHODS="fgsm bim mim pgd_a0.01 pgd_a0.05 pgd_a0.10" EPS_GRID="$FINE"
 export RUN=1 TGT=<target> PERT_D1=$A/pert_tgt_<target>_sc PERT_UNT=$A/pert_unt_sc
 cd experiment_2 && ./run_sc.sh        # both single-channel arms (calls ../experiment_3/campaign.sh)
 ```
 Output `$A/score_sc_{tgt_d1,unt}_r<RUN>_<method>.csv`. Figure: `plots/make_sc_vs_2ch_plot.py`.
+`SECS_SC` must cover the full grid (≈200 s for the 41-point fine grid at 130 s only ~36 of 41 ε are scored); verify the scored ε count equals the grid size.
 
 ### Experiment 3 (Type III Adversary) — `campaign.sh ch2_tgt_d1 | ch2_unt`
 Victim replay on ch0, δ on ch1, MIMO-locked, over the masked 16-point grid, with **`SCALE=1`**. The Qt GUI displays progress per method.
@@ -503,9 +503,14 @@ frame rejections) are rendered from embedded data by `plots/plot_exp3_sidebyside
 ### Experiment 4 — Robustness against authentication-model variations
 These four variations test whether the vulnerability depends on the classifier (Exp 4.4 is a table). Crafting follows §6.
 
-- **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real-valued CNN1D baseline (`lib/cnn1d.py`), compute its
-  reachability, and compare it with the CVNN. Data: `reachability_matrix_cnn1d.csv`, `docs/a1_*_ota_ber.csv`,
-  `docs/a1cvnn_*_ota_ber.csv` (aggregated into the workbook). Figure: `plots/fig1_col.py` produces `varA1_cnn1d_vs_cvnn_col.*`.
+- **Exp 4.1 — a real-valued model (CNN1D vs CVNN).** Train the real-valued CNN1D baseline, then compare it
+  with the CVNN on both the reachability matrix and the white-box over-the-air attack (fooling rate and BER
+  vs ε), testing whether the vulnerability is specific to the complex-valued model:
+  ```bash
+  python3 lib/cnn1d.py --root "$TRN" --val-run 3 --epochs 80   # -> trained_models/fingerprint_cnn1d.pt  ($TRN from §6.2)
+  ```
+  Data: `reachability_matrix_cnn1d.csv`, `docs/a1_*_ota_ber.csv` (CNN1D), `docs/a1cvnn_*_ota_ber.csv` (CVNN),
+  aggregated into the workbook. Figure: `plots/fig1_col.py` produces `varA1_cnn1d_vs_cvnn_col.*`.
 - **Exp 4.2 — transfer across models.** δ crafted on CVNN applied to CNN1D and the physics SVM/RF.
   `experiment_4/exp3_transfer_cnn1d_cvnn.py`. Data: `exp3_transfer_cnn1d_cvnn.{csv,npz}`,
   `exp3_ota_multimodel.csv`. Figures: `plots/fig2_check.py` (varA2 digital), `plots/fig3_check.py` (varA2 OTA).
@@ -532,9 +537,9 @@ Both variations run through the Experiment 3 two-channel pipeline (§6); neither
 ## 8. Regenerating every figure, table, and workbook
 
 All figure scripts reside in `plots/` and locate the repository root automatically, so they run from any
-directory. The `plot_exp*` scripts carry embedded data; the `make_*` scripts read the CSVs under
-`docs/`. Each writes `.png` and `.svg` (several also `.pdf`) under `docs/`; the `plot_*` scripts default
-to `plots/output/`, which `FIG_OUT` overrides.
+directory. The `plot_exp*` scripts carry embedded data and the `fig*` scripts read the workbook; the
+`make_*` scripts read the CSVs under `docs/`. The `make_*` scripts write `.png` and `.svg` under `docs/`;
+the `plot_*` and `fig*` scripts write `.png` and `.pdf` under `plots/output/`, which `FIG_OUT` overrides.
 
 **Master workbook (run first — the data index):**
 `plots/make_results_workbook_byexp.py` produces `docs/exp3_all_results_byexp.xlsx` (sheets A1-ML, A2-ML,
@@ -554,8 +559,8 @@ Exp 4.4 is reported as a table.
 Regenerate everything:
 ```bash
 for f in make_results_workbook_byexp \
-         plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp2_sidebyside \
-         plot_exp3_sidebyside plot_exp3_rejection plot_tables \
+         plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp1_singlecol plot_exp2_sidebyside \
+         plot_exp3_sidebyside plot_exp3_rejection plot_exp3_untargeted plot_exp3_targeted plot_tables \
          make_e1_diagram make_digital_vs_ota make_sc_vs_2ch_plot \
          fig1_col fig2_check fig3_check make_a3_plot \
          figB1 figB2; do
