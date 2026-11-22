@@ -130,7 +130,8 @@ datasets are required only to recompute results from scratch.
 
 ### Minimal bundle (Tier 2)
 
-> **Download:** https://uofnebraska-my.sharepoint.com/personal/98360679_nebraska_edu/Documents/Forms/All.aspx  (link withheld for double-blind review)  *(also cited in the paper)*
+> **Download:** the minimal bundle is linked from the anonymized artifact
+> (anonymous.4open.science/wisec-artifact); the direct URL is withheld here for double-blind review.
 >
 > After downloading, set `CAPTURES_ROOT` to the bundle root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
 
@@ -166,8 +167,8 @@ mkdir -p trained_models && cp "$CAPTURES_ROOT"/models/*.pt trained_models/
   `frame_run_*.bin`, `frame_index_run_*.csv`, `rx_frames_run_*.jsonl`, `ber_frames_run_*.jsonl`,
   `tx_ids_run_*.csv`.
 - **Split (leakage-safe):** per device, **runs 1,2 = train, run 3 = held-out validation**
-  (no window leakage). `${CAPTURES_ROOT}/validation/` holds separate BER/decode validation captures,
-  and `${CAPTURES_ROOT}/train/` is the 5-class symlink tree the trainer builds (§6.2).
+  (no window leakage). `${CAPTURES_ROOT}/train/` is the 5-class symlink tree the trainer builds (§6.2);
+  it is not part of the bundle.
 - Windowing: `WIN = 1024` complex samples tiled **non-overlapping** (stride = `WIN`) over each frame's
   payload region `[PRE_ROLL : PRE_ROLL+ACTIVE] = [500 : 13812]` in `fp_model.py` — i.e. skipping the
   preamble and SIGNAL field (samples 100–500). Each window is the paper's **I/Q frame** (the model
@@ -188,7 +189,7 @@ not required to regenerate any figure. Only the small TX waveforms in `attack_as
 | Directory | Role | Key contents |
 |---|---|---|
 | `attack_assets/` | OTA victim/adversary waveforms (Exp 2/3) | `ch0_run3_107.bin` (victim replay), `ch1_e04_s1.bin` (adversary δ) |
-| `attack_b1/` | Exp 5.1 adversary-power sweep | `b1_cvnn_foolber_<method>.csv`, `b1_cvnn_tgt_d3_foolber_<method>.csv` |
+| `attack_b1/` | Exp 5.1 adversary-power sweep | `b1_cvnn_foolber_<method>.csv`, `b1_cvnn_tgt_d2_foolber_<method>.csv` |
 | `attack_a1_transfer/` | Exp 4.2 cross-model transfer | per-model white-box score CSVs |
 | `attack_a1_gain/` | Exp 4.1 gain sweep | `g16_<method>.csv` |
 | `attack_enroll/` | attack re-enrollment baseline | `attack/ch0.bin`, `ota_perturbations/` (first δ bank) |
@@ -520,8 +521,8 @@ Both variations run through the Experiment 3 two-channel pipeline (§6); neither
 
 - **Exp 5.1 — perturbation power.** Two-channel fooling rate, target rate, and BER versus adversary gain
   and measured received PSR (ε = 0.01), with the distance-ratio reach. Runs on `$CAPTURES_ROOT/attack_b1`. Data:
-  `docs/b1_cvnn_foolber_<method>.csv` (untargeted), `docs/b1_cvnn_tgt_d3_foolber_<method>.csv`
-  (targeted device_3). Figure: `plots/figB1.py` (varB1 power sweep).
+  `docs/b1_cvnn_foolber_<method>.csv` (untargeted), `docs/b1_cvnn_tgt_d2_foolber_<method>.csv`
+  (targeted device_2). Figure: `plots/figB1.py` (varB1 power sweep).
 - **Exp 5.2 — one perturbation for every frame.** Per-frame matched δ versus a single universal waveform reused on every frame
   (the realizable adversary). Data: `docs/b2_matched_vs_unmatched.csv`. Figure:
   `plots/figB2.py` produces `varB2_matched_vs_universal.*`.
