@@ -57,9 +57,27 @@ ATTACKS = {
 }
 
 
+_SAMPLE_NPZ = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           'docs', 'reachability_sample.npz')
+
+
+def _sample_windows(device, max_windows):
+    """Fallback windows from the shipped reachability sample when no captures are present."""
+    if not os.path.exists(_SAMPLE_NPZ):
+        return None
+    z = np.load(_SAMPLE_NPZ)
+    key = f'device_{device}'
+    return z[key][:max_windows].astype(np.complex64) if key in z.files else None
+
+
 def load_windows(root, device, max_windows):
-    """Return (N, WIN) complex64 unit-RMS windows for a device (capped at max_windows)."""
+    """Return (N, WIN) complex64 unit-RMS windows for a device (capped at max_windows).
+
+    Falls back to docs/reachability_sample.npz (300 windows/device) when the enrollment
+    captures are absent — e.g. before the dataset bundle is downloaded (README §3)."""
     files = sorted(glob.glob(os.path.join(root, f'device_{device}', 'clean_run_*.bin')))
+    if not files:
+        return _sample_windows(device, max_windows)
     chunks, n = [], 0
     for f in files:
         frames = extract_frames_for_file(f, floor_pct=20.0, thr_mult=2.0)[0]
@@ -71,7 +89,7 @@ def load_windows(root, device, max_windows):
         if n >= max_windows:
             break
     if not chunks:
-        return None
+        return _sample_windows(device, max_windows)
     return np.concatenate(chunks, 0)[:max_windows]
 
 

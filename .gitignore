@@ -4,8 +4,10 @@ captures/
 *.rxlog
 *.sigmf-data
 
-# ── Trained models — optional; host on OneDrive models/ ──
+# ── Trained models — optional; host externally (§3) ──
 *.pt
+# …except the main CVNN classifier, shipped so Tier-1 reachability (§2 Part C) runs with no download
+!trained_models/fingerprint_cvnn.pt
 
 # ── Python ──
 __pycache__/

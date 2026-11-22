@@ -72,9 +72,10 @@ adversary. Both run through the Experiment 3 two-channel pipeline:
 
 ## 2. Quick start — reproduce results without radios
 
-Parts **A** and **B** are **Tier 1** (§3): Both shipped in this repo, with no download and no models. Part **C** (reachability) is
-**Tier 2**: it requires a `.pt` model and the enrollment data from the minimal bundle (§3). All scripts locate the repository root automatically and
-therefore run from any directory.
+Parts **A**, **B**, and **C** are all **Tier 1** — none needs a download. A and B use data shipped in `docs/`;
+C (reachability) runs on the shipped CVNN model and a 300-window/device sample (`docs/reachability_sample.npz`),
+and optionally on the full enrollment when the bundle is available (§3). All scripts locate the repository
+root automatically and therefore run from any directory.
 
 **0. Get the code & install** (one time). Obtain the artifact — download and unzip the supplied archive (or
 `git clone` the repository once de-anonymized) — then change into the extracted folder and install the
@@ -96,17 +97,14 @@ python3 plots/plot_exp3_rejection.py     # frame rejections vs ε; figures to pl
 python3 plots/make_results_workbook_byexp.py   # -> docs/exp3_all_results_byexp.xlsx
 ```
 
-**C. Run Experiment 1: Type I Classifier reachability** (Tier 2: needs a model in `trained_models/` + the
-enrollment windows, no radio). First download the minimal bundle (§3), point `CAPTURES_ROOT` at it, and
-copy the models into place:
+**C. Run Experiment 1: Type I Classifier reachability** (no radio, no download — the CVNN model and a
+300-window/device sample ship in the repo):
 ```bash
-export CAPTURES_ROOT=/path/to/bundle               # the unpacked bundle root — it contains enrollment/ and models/
-mkdir -p trained_models && cp "$CAPTURES_ROOT"/models/*.pt trained_models/
-python3 experiment_1/exp1_reachability.py \
-  --model trained_models/fingerprint_cvnn.pt \
-  --base  $CAPTURES_ROOT/enrollment \
-  --out   reachability_quickstart.csv
+python3 experiment_1/exp1_reachability.py --out reachability_quickstart.csv
 ```
+This uses `trained_models/fingerprint_cvnn.pt` and `docs/reachability_sample.npz` — the same 300 windows per
+device the shipped `reachability_matrix.csv` was computed from, so it reproduces that matrix exactly. To run
+on the full enrollment instead, set `CAPTURES_ROOT` to the bundle (§3) and add `--base $CAPTURES_ROOT/enrollment`.
 
 Full reproduction from raw captures (capture, train, craft, transmit, score) is described in §6;
 per-experiment reproduction is described in §7.
@@ -130,10 +128,10 @@ datasets are required only to recompute results from scratch.
 
 ### Minimal bundle (Tier 2)
 
-> **Download:** the minimal bundle is linked from the anonymized artifact
-> (anonymous.4open.science/wisec-artifact); the direct URL is withheld here for double-blind review.
+> **Download:** the minimal bundle is not distributed with this submission; a download link will be added
+> to the repository later. Tier 1 — every figure, table, and the workbook — needs no download (see §2).
 >
-> After downloading, set `CAPTURES_ROOT` to the bundle root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
+> Once the bundle is available, set `CAPTURES_ROOT` to its root (it contains `enrollment/`, `models/`, `attack_assets/`) and copy `models/*.pt` into `trained_models/` (§3.3).
 
 ```
 bundle/                   #   = $CAPTURES_ROOT
@@ -200,9 +198,11 @@ per-block fingerprint scores · `ber_*.csv` = decode BER · `*.sh` = run driver.
 
 ### 3.3 Trained models — `*.pt` (download into `trained_models/`)
 
-The trained models are optional; Tier 1 does not require them. The `.pt` checkpoints are used only to
-recompute results from the classifier (§2C, §6–§7), and §6.2 retrains an equivalent model from the raw
-enrollment in any case. The supplied checkpoints simply avoid retraining and give bit-exact reproduction.
+The main CVNN classifier (`fingerprint_cvnn.pt`) ships in the repo so Tier-1 reachability (§2 Part C) runs
+with no download, together with `docs/reachability_sample.npz` (300 windows/device). The other two
+checkpoints (`fingerprint_cnn1d.pt`, `fingerprint_freqcvnn.pt`) arrive with the bundle (§3). The `.pt`
+checkpoints recompute results from the classifier (§2C, §6–§7); §6.2 retrains an equivalent model from the
+raw enrollment, and the supplied checkpoints simply avoid retraining and give bit-exact reproduction.
 
 Three checkpoints, one per architecture, all scoring `WIN=1024` complex windows over 5 classes
 (`device_1…5`). Place them in the repository root only if the recompute path is required:
@@ -223,7 +223,7 @@ Architectures: **CVNN** = time-domain complex CNN (`fp_model.py`), **FreqCVNN** 
 ```
 AdRadio/                                # WiSec 2027 artifact (code only)
 ├── README.md  requirements.txt  LICENSE
-├── trained_models/                     # fingerprint_{cvnn,cnn1d,freqcvnn}.pt — classifiers (gitignored; hosted externally, §3)
+├── trained_models/                     # fingerprint_cvnn.pt ships here (Tier-1 reachability); cnn1d/freqcvnn gitignored, arrive with the bundle (§3)
 │
 ├── lib/                                # shared modules (imported across every experiment)
 │   ├── fp_model.py                #   CVNN input windowing — single source of truth
