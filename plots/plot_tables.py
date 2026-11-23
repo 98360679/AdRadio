@@ -4,8 +4,9 @@
 One figure per table, each (a) victim-class accuracy, (b) bit error rate,
 over exactly the epsilon rows and the four methods that the tables report.
 
-  table_exp1_untargeted.tex -> exp1_table_sidebyside.{pdf,png}
-  table_exp2_untargeted.tex -> exp2_table_sidebyside.{pdf,png}
+  Experiment 1 / Table 5 (plot_exp1_singlecol.py)  -> exp1_table_sidebyside.{pdf,png}
+  Experiment 2 / Table 6 (plot_exp2_sidebyside.py) -> exp2_table_sidebyside.{pdf,png}
+  Experiment 3 / Table 7 (plot_exp3_untargeted.py) -> exp3_table_sidebyside.{pdf,png}
 
 Accuracy is 100 - fooling rate, computed in Decimal so the plotted values are
 the table's values exactly. Experiment 2 BER points at which zero bit errors
@@ -177,3 +178,56 @@ handles = [Line2D([], [], label=n, markersize=2.4, linewidth=0.9,
 finish(fig, axes, ["(a) Accuracy", "(b) BER"], "exp2_table_sidebyside",
        handles=handles)
 print("exp2_table_sidebyside saved")
+
+
+# ===================== Experiment 3 (Table 7) =====================
+n3 = {}
+exec(open(os.path.join(HERE, "plot_exp3_untargeted.py")).read().split("STYLE =")[0], n3)
+E3, D3, FC3 = np.asarray(n3["DELTA"], float), n3["DATA"], n3["F"]
+FR3 = {m: D3[m]["fr"] for m in D3}
+BE3 = {m: D3[m]["ber"] for m in D3}
+rows3 = [0.010, 0.020, 0.025, 0.030, 0.040, 0.050, 0.080, 0.100]
+i3 = [int(np.argmin(np.abs(E3 - e))) for e in rows3]
+x3 = np.array(rows3)
+XL3 = (0.008, 0.104)
+XT3 = [0.01, 0.03, 0.05, 0.08, 0.10]
+psr3 = {t: 20 * np.log10(t) + 3.01 for t in XT3}
+
+fig, axes = plt.subplots(1, 2, figsize=(3.5, 1.4327))
+for name in M:
+    axes[0].plot(x3, [acc(FR3[name][i]) for i in i3], label=name,
+                 markersize=2.4, linewidth=0.9, markeredgewidth=0.4,
+                 **STYLE[name])
+
+    y = np.array([BE3[name][i] for i in i3])
+    cen = np.array([BE3[name][i] == FC3 for i in i3])
+    st = STYLE[name]
+    axes[1].plot(x3, y, color=st["color"], ls=st["ls"], linewidth=0.9,
+                 label=name, zorder=2)
+    # measured points filled, censored (rule-of-three) upper bounds hollow
+    axes[1].plot(x3[~cen], y[~cen], ls="none", marker=st["marker"],
+                 color=st["color"], markersize=2.4, markeredgewidth=0.4, zorder=3)
+    axes[1].plot(x3[cen], y[cen], ls="none", marker=st["marker"],
+                 markerfacecolor="white", markeredgecolor=st["color"],
+                 markersize=2.4, markeredgewidth=0.5, zorder=3)
+
+axes[0].set_ylim(-4, 106)
+axes[0].set_yticks([0, 20, 40, 60, 80, 100])
+axes[0].set_ylabel("Accuracy (%)", fontsize=9, labelpad=2)
+axes[1].set_yscale("log")
+axes[1].set_ylim(4e-6, 1)
+axes[1].set_ylabel("BER", fontsize=9, labelpad=2)
+for ax in axes:
+    ax.set_xlim(*XL3)
+    ax.set_xticks(XT3)
+    ax.set_xticklabels(["0.01", "0.03", "0.05", "0.08", "0.10"])
+    ax.grid(True, which="major", ls="--", alpha=0.3, linewidth=0.45)
+    ax.tick_params(length=2.5, pad=1.5)
+    ax.set_xlabel(r"$\epsilon$", fontsize=9, labelpad=1)
+    psr_axis(ax, XT3, psr3, XL3)
+
+handles = [Line2D([], [], label=n, markersize=2.4, linewidth=0.9,
+                  markeredgewidth=0.4, **STYLE[n]) for n in M]
+finish(fig, axes, ["(a) Accuracy", "(b) BER"], "exp3_table_sidebyside",
+       handles=handles)
+print("exp3_table_sidebyside saved")

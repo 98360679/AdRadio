@@ -113,7 +113,7 @@ on the full enrollment instead, set `CAPTURES_ROOT` to the bundle (§3) and add 
 ```bash
 for f in make_results_workbook_byexp \
          plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp1_singlecol plot_exp2_sidebyside \
-         plot_exp3_sidebyside plot_exp3_rejection plot_exp3_untargeted plot_exp3_targeted plot_tables \
+         plot_exp3_sidebyside plot_exp3_rejection plot_exp3_untargeted plot_exp3_targeted plot_tables make_tables \
          make_e1_diagram make_digital_vs_ota make_sc_vs_2ch_plot \
          fig1_col fig2_check fig3_check make_a3_plot \
          figB1 figB2; do
@@ -274,7 +274,7 @@ AdRadio/                                # WiSec 2027 artifact (code only)
 │   └── README.md                       #   Exp 5.1/5.2 run via experiment_3; figures in plots/ (see §8)
 │
 ├── plots/          # ALL figure/graph generators (self-locating; run from anywhere)
-│   ├── plot_exp{1,2,3}_*.py  plot_tables.py          # Exp 1/2/3 paper figures + result tables
+│   ├── plot_exp{1,2,3}_*.py  plot_tables.py  make_tables.py   # Exp 1/2/3 figures + Table 5/6/7 figures & CSVs
 │   ├── fig1_col.py  fig2_check.py  fig3_check.py  make_a3_plot.py  # Exp 4 (4.1, 4.2, 4.3)
 │   ├── figB1.py  figB2.py  # Exp 5 (5.1, 5.2)
 │   └── make_results_workbook_byexp.py               # -> docs/…xlsx master index
@@ -569,7 +569,7 @@ A2-transfer-raw, A3-ML, A4-ML, B1-W, B2-W).
 **Experiments 1–3 (main paper figures):** `plots/plot_exp1_sidebyside.py`,
 `plots/plot_exp1_ber_sidebyside.py`, `plots/plot_exp1_singlecol.py` (Exp 1) · `plots/plot_exp2_sidebyside.py`
 (Exp 2) · `plots/plot_exp3_sidebyside.py`, `plots/plot_exp3_rejection.py`, `plots/plot_exp3_untargeted.py`,
-`plots/plot_exp3_targeted.py` (Exp 3) · `plots/plot_tables.py` (result tables). Supporting:
+`plots/plot_exp3_targeted.py` (Exp 3) · `plots/plot_tables.py` (Table 5/6/7 figures) · `plots/make_tables.py` (Tables 5/6/7 as `docs/table{5,6,7}_*.csv`). Supporting:
 `plots/make_e1_diagram.py`, `plots/make_digital_vs_ota.py`, `plots/make_sc_vs_2ch_plot.py`.
 
 **Experiment 4 (Exp 4.1–4.4):** `plots/fig1_col.py` (Exp 4.1) · `plots/fig2_check.py`, `plots/fig3_check.py` (Exp 4.2) · `plots/make_a3_plot.py` (Exp 4.3).
@@ -581,7 +581,7 @@ Regenerate everything:
 ```bash
 for f in make_results_workbook_byexp \
          plot_exp1_sidebyside plot_exp1_ber_sidebyside plot_exp1_singlecol plot_exp2_sidebyside \
-         plot_exp3_sidebyside plot_exp3_rejection plot_exp3_untargeted plot_exp3_targeted plot_tables \
+         plot_exp3_sidebyside plot_exp3_rejection plot_exp3_untargeted plot_exp3_targeted plot_tables make_tables \
          make_e1_diagram make_digital_vs_ota make_sc_vs_2ch_plot \
          fig1_col fig2_check fig3_check make_a3_plot \
          figB1 figB2; do
